@@ -1,0 +1,6244 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Xtab API",
+    "description": "REST API of Xtab: workspaces, bases, tables, fields, views, records, imports and exports, members and their roles.",
+    "license": {
+      "name": "LicenseRef-Proprietary"
+    },
+    "version": "0.2.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Relative to the address of the installation"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Log in: a session cookie `__Host-xtab_session`. Every failure — wrong password, unknown\nor inactive account — gets the same answer in the same time.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Logged in; the session cookie is set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, with Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "overloaded, with Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "End the session; the browser drops its cache and storage (`Clear-Site-Data`).",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Logged out; the cookie is removed"
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/step-up": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Confirm the person of the session again with the password: for\nten minutes the session may do what needs it, e.g. export more than 1000 records. A wrong\npassword keeps the session; attempts count in the limits of login.",
+        "operationId": "step_up",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Confirmed"
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: wrong-password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, with Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/invitations/accept": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Set the first password of an invited account and log in.",
+        "operationId": "accept_invitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Account active, logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: token-invalid or a rule of the password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/password/reset-request": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Request a letter with a reset link. Always `202`, at once: whether the account exists\nis not revealed.",
+        "operationId": "reset_request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; a letter is sent if the account may get one"
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/password/reset": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Set a new password; every session of the account is revoked.",
+        "operationId": "reset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password set; log in again"
+          },
+          "422": {
+            "description": "validation-failed: token-invalid or a rule of the password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "The account of the session.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "The account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Change the settings of one's own account: the language of the interface.",
+        "operationId": "change_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The account with its settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: a language the interface does not speak",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/permissions": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "The matrix of rights of this version, generated from the code: the rights this build\nenforces, without the ones still planned; readable by everyone who is logged in — the\nrules of access are not a secret. The texts are in the language of the user.",
+        "operationId": "permissions",
+        "responses": {
+          "200": {
+            "description": "The matrix",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Permissions"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Workspaces the user has a role in, or a role in one of their bases, with those bases.",
+        "operationId": "list_workspaces",
+        "responses": {
+          "200": {
+            "description": "The workspaces, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Workspace"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create a workspace; its creator becomes its owner. Any active user may.",
+        "operationId": "create_workspace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "A workspace with all its bases; needs a role in the workspace itself.",
+        "operationId": "get_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: missing or not visible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete a workspace with its bases (owner); the data stays until the trash removes it (v1).",
+        "operationId": "delete_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Rename a workspace (owner).",
+        "operationId": "rename_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/bases": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create a base (creator of the workspace): `202` with the operation that creates its\nschema; the base is in `object` of the operation once it succeeded.",
+        "operationId": "create_base",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "A base (reader of the base).",
+        "operationId": "get_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The base",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: missing or not visible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete a base (owner); the data stays until the trash removes it (v1).",
+        "operationId": "delete_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Rename a base (creator).",
+        "operationId": "rename_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/{operation}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "State of a structure operation; visible to whoever may open its base, or see its\nworkspace while the base is being created.",
+        "operationId": "get_operation",
+        "parameters": [
+          {
+            "name": "operation",
+            "in": "path",
+            "description": "`opr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: missing or not visible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/tables": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create a table (creator of the base): `202` with the operation; the table is in\n`object` of the operation once it succeeded. Without `fields` it gets «Название».",
+        "operationId": "create_table",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, description or fields",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "A table with its fields and shared views (reader of the base).",
+        "operationId": "get_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: missing or not visible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete a table with its fields and views (creator of the base); the data stays until\nthe trash removes it (v1).",
+        "operationId": "delete_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Rename or describe a table (creator of the base).",
+        "operationId": "update_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TablePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name taken or invalid, description too long",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/fields": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Add a field at the end of a table or before or after one of its fields (creator of the\nbase): `202` with the operation; the field is in `object` of the operation once it\nsucceeded.",
+        "operationId": "add_field",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, type, description, options, before or after",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fields/{field}": {
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete a field (creator of the base); the primary field cannot be deleted.",
+        "operationId": "delete_field",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the primary field",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Rename, describe or change the settings of a field (creator of the base). Choices of a\nsingle select are the whole list: known ones by `id`, new ones without it.",
+        "operationId": "update_field",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Field"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, description or options",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/views": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Create a shared view of a table (creator of the base); `grid` in v0.2. With `from`, the\nnew view copies the settings of that view of the same table.",
+        "operationId": "create_view",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, type or from",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "A shared view (reader of the base).",
+        "operationId": "get_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: missing or not visible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Delete a shared view (creator of the base); a table keeps at least one.",
+        "operationId": "delete_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the last view of the table",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Rename a shared view or replace its settings (creator of the base): the order, widths and\nvisibility of the columns and the height of the rows.",
+        "operationId": "update_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name or the settings",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/invitations": {
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Invite a person. Without `workspace` and `base` — an administrator of the organization\nonly; with one of them — whoever manages its members, with a role by the rules of\ngranting. An active member is not invited again: give a role with `…/grants`.",
+        "operationId": "invite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Invited; the link went by mail (see `delivery`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator, or the role is above what the inviter may give",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the workspace or base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "already-member",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: email, name, role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/users": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Members of the organization; every member sees them.",
+        "operationId": "list_users",
+        "parameters": [
+          {
+            "name": "after",
+            "in": "path",
+            "description": "`usr_…` of the last member of the previous page.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Members per page, 1–500, 100 by default.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of members by number",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "malformed-request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/grants": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Personal roles on a workspace; every member of it sees them.",
+        "operationId": "workspace_grants",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The roles, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantOut"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Give or change a role on a workspace: not above the giver's own; a creator gives up to\n«Editor» and does not touch creators and owners; the last owner stays.",
+        "operationId": "set_workspace_grant",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unknown-user, role, last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Take away a role on a workspace; anyone may take away their own, except the last owner.",
+        "operationId": "remove_workspace_grant",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principal",
+            "in": "path",
+            "description": "`usr_…`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Taken away"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/grants": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Personal roles on a base (not those it inherits from its workspace).",
+        "operationId": "base_grants",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The roles, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantOut"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Give or change a role on a base, by the same rules as on a workspace.",
+        "operationId": "set_base_grant",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unknown-user, role, last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Take away a role on a base; anyone may take away their own, except the last owner.",
+        "operationId": "remove_base_grant",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principal",
+            "in": "path",
+            "description": "`usr_…`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Taken away"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Records of a table in the order of a view (reader of the base): its filter and sort,\nanother sort by `sort=`; a page and the cursor of the next one.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` of the table: its filter and sort.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "fields",
+            "in": "path",
+            "description": "Comma-separated `fld_…` or names of the fields to return; all by default.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "path",
+            "description": "Comma-separated `fld_…` or names of the fields to sort by instead of the view's sort;\n`-` before one sorts it from the largest. Up to five.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Records per page, 1–500, 100 by default.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "path",
+            "description": "`next_cursor` of the previous page.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "in": "path",
+            "description": "Number of a record in the order of the view, from 0: the page starts at it instead\nof a cursor; not together with `cursor`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the table or the view",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: limit, fields, sort or cursor; view-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Create records at the end of the table (editor of the base).",
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The created records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: errors by `records[i].fields.<key>`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Change fields of records (editor of the base). With `if` a record changes only if the\nfields still have the expected values; otherwise nothing is applied and the answer is\n`412` with the current records.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Changes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The records after the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "precondition-failed: `errors[].record`, `errors[].field` and the `current` records",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreconditionFailed"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: errors by `records[i]…`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/query": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Records of a table by a filter (reader of the base): `GET …/records` with the filter in\nthe body, joined by «and» with the filter of the view.",
+        "operationId": "query_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A page of records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the table or the view",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the filter (with the path to the condition), sort, limit, fields or cursor; view-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/count": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The number of records of a query (reader of the base): the filter of the body joined\nwith the filter of the view by «and»; without a view — the filter alone, as a temporary\nfilter of a tab counts. Exact within 2 s, otherwise the estimate of the\nplanner with `exact: false`.",
+        "operationId": "count_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordCount"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Count"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the table or the view",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the filter, with the path to the condition",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/groups": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The headers of the groups of records with their summaries (reader of the base):\nthe groups and summaries of the view or of the request, the filter of the body joined\nwith the view's by «and»; without groups — the summary row of all the records. Exact\nwithin 2 s, otherwise the estimate of the planner for the count with `exact: false`,\nwithout summaries and groups.",
+        "operationId": "group_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordGroups"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The headers of the groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Groups"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the table or the view",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the filter, groups or summaries, with the path to the part at fault",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/{record}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "One record (reader of the base).",
+        "operationId": "one",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "description": "`rec_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/count": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The number of records of a view with its filter (reader of the base): exact within 2 s,\notherwise the estimate of the planner with `exact: false`.",
+        "operationId": "count",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The count",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Count"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/delete": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Delete records for good — no trash in the MVP (editor of the base).",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The deleted records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Deleted"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` not found or repeated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/search": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Search the records of a base (reader of the base): by word forms and the start of the\nlast word, else by fragment; up to 20 records of a table and 50 in all, the best first.",
+        "operationId": "search_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseSearch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The records found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseFound"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the text; search-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/exports": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Export the records of a view to CSV or XLSX in the background. More than 1000 records\nneed `POST /auth/step-up` within ten minutes; the answer `202` is the export, followed by\n`GET /exports/{export}`.",
+        "operationId": "create_export",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The export is queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Export"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden, or step-up-required for more than 1000 records",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the separator, the filter, the sort or the search",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-exports: two are running already",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: no storage of files",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{export}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The state of an export; only the one who asked sees it.",
+        "operationId": "get_export",
+        "parameters": [
+          {
+            "name": "export",
+            "in": "path",
+            "description": "`exp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The export",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Export"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{export}/file": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The file of a finished export, as an attachment; only the one who asked downloads it,\nwithin a day.",
+        "operationId": "export_file",
+        "parameters": [
+          {
+            "name": "export",
+            "in": "path",
+            "description": "`exp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file: CSV or XLSX",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "404": {
+            "description": "not-found: no such export, not finished, or its day is over",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: the storage of files does not answer",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Start an upload of a file for an import, up to 50 MB; the bytes follow by\n`PUT /uploads/{upload}`.",
+        "operationId": "create_upload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The upload and its file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name or the size",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-uploads: four are on their way",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: no storage of files",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads/{upload}": {
+      "put": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "The bytes of an upload (`application/octet-stream`). The type is found by the first\nbytes: CSV or XLSX; anything else is refused and not kept.",
+        "operationId": "put_upload",
+        "parameters": [
+          {
+            "name": "upload",
+            "in": "path",
+            "description": "`upl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The file is uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedFile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such upload of this account, or it is done",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unsupported-file or too-large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/imports": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Import an uploaded file into a new table of the base: the file is analyzed in the\nbackground, `GET /imports/{import}` shows what was found and the mapping proposed.",
+        "operationId": "import_new_table",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The import is analyzed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the file",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/imports": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Import an uploaded file as new records of the table: as\n`POST /bases/{base}/imports`, with the right to import into an existing table.",
+        "operationId": "import_append",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The import is analyzed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the file",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "An import: the file as it was read, its first rows and the mapping; only its author\nsees it.",
+        "operationId": "get_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Change the mapping of an analyzed import: the name of the new table, its fields and types,\nor the fields of the existing table each column fills. Another sheet or row of headers\nreads the file again (`202`).",
+        "operationId": "change_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The mapping is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "The file is read again",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-ready: the import is not analyzed or already runs",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the mapping",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/run": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Run an analyzed import: its records are written in portions in the background, a new table\nshows in its base when they are. More than a tenth of the first 1000 rows' values that do\nnot fit stop it (`paused`) until it is run again with `confirm`. Two imports of an\norganization run at once at most.",
+        "operationId": "run_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The import runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: the right to import is gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-ready: the import is not analyzed, or runs already",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the mapping",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-imports: two run already",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/cancel": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Stop an import: what is written into an existing table stays and may be undone; an\nimport into a new table leaves no table.",
+        "operationId": "cancel_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The import is stopped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-running: it is over already",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/undo": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Delete the records an import made, within a day after it; records\nchanged since stay unless `keep_changed` is `false`. Records it did not make are never\ntouched.",
+        "operationId": "undo_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UndoImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The records are being deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "cannot-undo: nothing written, already undone, the table is gone, or the day is over",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/report": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "The report of the values of an import that did not fit: CSV with the row, the column, the\nvalue and why; only the author of the import downloads it.",
+        "operationId": "import_report",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The report",
+            "content": {
+              "text/csv": {}
+            }
+          },
+          "404": {
+            "description": "not-found: no such import or no report",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptBody": {
+        "type": "object",
+        "description": "Accept an invitation: the token from the link (in the body only), the first\npassword, optionally the name.",
+        "required": [
+          "token",
+          "password"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token from the fragment of the invitation link."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "The new password."
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name, at most 200 characters."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AndInput": {
+        "type": "object",
+        "description": "`{\"and\": [...]}`.",
+        "required": [
+          "and"
+        ],
+        "properties": {
+          "and": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterInput"
+            },
+            "description": "The nodes."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Base": {
+        "type": "object",
+        "description": "A base.",
+        "required": [
+          "id",
+          "name",
+          "workspace",
+          "schema_version",
+          "tables"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "workspace": {
+            "type": "string",
+            "description": "Its workspace, `wsp_…`."
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Grows with every change of the structure; a client compares it with its copy."
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            },
+            "description": "Its tables with their fields and shared views."
+          }
+        }
+      },
+      "BaseFound": {
+        "type": "object",
+        "description": "The records found in a base, the best first.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoundRecord"
+            },
+            "description": "Up to 20 records of a table and 50 in all."
+          },
+          "indexing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`tbl_…` of the tables whose search is still being filled: some of their records\nmay be missing."
+          },
+          "more_tables": {
+            "type": "boolean",
+            "description": "The base has more tables than one search looks in (the first 100 in their order)."
+          }
+        }
+      },
+      "BaseRef": {
+        "type": "object",
+        "description": "A base in a list.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          }
+        }
+      },
+      "BaseSearch": {
+        "type": "object",
+        "description": "A search of the records of a base: every table the reader sees, by word forms and by the\nstart of the last word; a table where no word is found is searched by fragment.",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text: up to 200 characters; of its words the first 8 are searched."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Change": {
+        "type": "object",
+        "description": "A change of one record: only the fields sent are set; `null` empties a field.",
+        "required": [
+          "id",
+          "fields"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "fields": {
+            "type": "object",
+            "description": "New values by `fld_…` or name."
+          },
+          "if": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Apply only if these fields still have these values; `null` — empty."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Changes": {
+        "type": "object",
+        "description": "Changes of records.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "Up to 1000 records."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChoiceInput": {
+        "type": "object",
+        "description": "A choice of a single select. Without `id` it is a new one.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`opt_…` of an existing choice; absent for a new one."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name, unique in the field regardless of case."
+          },
+          "color": {
+            "type": "string",
+            "description": "`gray` (default), `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChoiceOut": {
+        "type": "object",
+        "description": "A choice of a single select.",
+        "required": [
+          "id",
+          "name",
+          "color"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`opt_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "color": {
+            "type": "string",
+            "description": "Color."
+          }
+        }
+      },
+      "ColorByField": {
+        "type": "object",
+        "description": "`{\"field\": …}`.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` or the name of a single select."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColorByRules": {
+        "type": "object",
+        "description": "`{\"rules\": […]}`.",
+        "required": [
+          "rules"
+        ],
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColorRuleInput"
+            },
+            "description": "Up to ten rules, in their order."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColorInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ColorByField",
+            "description": "`{\"field\"}`: the colour of the choice of a single select."
+          },
+          {
+            "$ref": "#/components/schemas/ColorByRules",
+            "description": "`{\"rules\": [...]}`: the colour of the first rule a record meets."
+          }
+        ],
+        "description": "The colour of records as the API carries it: by a single select, or by rules."
+      },
+      "ColorRuleInput": {
+        "type": "object",
+        "description": "A rule of a colour: records of the filter get the colour.",
+        "required": [
+          "filter",
+          "color"
+        ],
+        "properties": {
+          "filter": {
+            "$ref": "#/components/schemas/FilterInput",
+            "description": "The filter, as of a view."
+          },
+          "color": {
+            "type": "string",
+            "description": "`gray`, `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColumnMapping": {
+        "type": "object",
+        "description": "Where a column of the file goes.",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "source": {
+            "type": "integer",
+            "description": "The number of the column in the file, from 0.",
+            "minimum": 0
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Into an existing table: the `fld_…` it fills; none — the column is not imported."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Into a new table: the name of its field."
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Into a new table: the type of its field."
+          },
+          "skip": {
+            "type": "boolean",
+            "description": "Into a new table: the column is not imported."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConditionFailed": {
+        "type": "object",
+        "description": "A record whose condition failed.",
+        "required": [
+          "record",
+          "field",
+          "code"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "field": {
+            "type": "string",
+            "description": "The field of the condition, by `fld_…` or name as the request gave it."
+          },
+          "code": {
+            "type": "string",
+            "description": "`condition-failed`."
+          }
+        }
+      },
+      "ConditionInput": {
+        "type": "object",
+        "description": "`{\"field\", \"op\", \"value\"}`.",
+        "required": [
+          "field",
+          "op"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` or the name of the field."
+          },
+          "op": {
+            "type": "string",
+            "description": "The operator: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`…"
+          },
+          "value": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The value: by the type of the field and the operator; absent or `null` — the\ncondition is being filled in and does not filter yet."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Count": {
+        "type": "object",
+        "description": "The number of records of a view.",
+        "required": [
+          "count",
+          "exact"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The number."
+          },
+          "exact": {
+            "type": "boolean",
+            "description": "`false` — the estimate of the planner: the exact count did not fit its time."
+          }
+        }
+      },
+      "DeleteRecords": {
+        "type": "object",
+        "description": "Records to delete.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…`, up to 1000."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Deleted": {
+        "type": "object",
+        "description": "Records deleted.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` of the deleted records."
+          }
+        }
+      },
+      "Delivery": {
+        "type": "string",
+        "description": "How an invitation reached the person.",
+        "enum": [
+          "mail",
+          "failed",
+          "off"
+        ]
+      },
+      "Direction": {
+        "type": "string",
+        "description": "The direction of a key of a sort; empty values are last either way.",
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "Export": {
+        "type": "object",
+        "description": "An export.",
+        "required": [
+          "id",
+          "status",
+          "format",
+          "records_done",
+          "expires_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`exp_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExportStatus",
+            "description": "Where it is."
+          },
+          "format": {
+            "$ref": "#/components/schemas/ExportFormat",
+            "description": "The format."
+          },
+          "records_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Records to write, when known."
+          },
+          "records_done": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records written."
+          },
+          "file_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the file, when it is ready."
+          },
+          "size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Its size in bytes."
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "The file is downloaded by `GET /exports/{export}/file` until this moment, RFC 3339."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it failed."
+          }
+        }
+      },
+      "ExportFormat": {
+        "type": "string",
+        "description": "The format of the file.",
+        "enum": [
+          "csv",
+          "xlsx"
+        ]
+      },
+      "ExportStatus": {
+        "type": "string",
+        "description": "Where an export is.",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ]
+      },
+      "Field": {
+        "type": "object",
+        "description": "A field.",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "type",
+          "options",
+          "primary",
+          "read_only"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description."
+          },
+          "type": {
+            "type": "string",
+            "description": "Type; new types may come — a client must accept them."
+          },
+          "options": {
+            "$ref": "#/components/schemas/OptionsOut",
+            "description": "Settings."
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "The primary field of the table."
+          },
+          "read_only": {
+            "type": "boolean",
+            "description": "The system writes its values (autonumber, system fields)."
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "description": "One problem of a field (an item of `errors[]`).",
+        "required": [
+          "field",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Name or path of the field in the request, e.g. `records[3].fields.Сумма`."
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Text for the person."
+          }
+        }
+      },
+      "FieldInput": {
+        "type": "object",
+        "description": "A new field.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name, unique in the table regardless of case."
+          },
+          "type": {
+            "type": "string",
+            "description": "`single_line_text`, `long_text`, `number`, `checkbox`, `single_select`, `date`,\n`date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`,\n`last_modified_by`."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description."
+          },
+          "options": {
+            "$ref": "#/components/schemas/OptionsInput",
+            "description": "Settings."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Put the field before this one (`fld_…`) in the order of the table;\nwithout `before` and `after` it goes to the end. Only when adding one field."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Put the field after this one (`fld_…`); not together with `before`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FieldPatch": {
+        "type": "object",
+        "description": "Changes of a field; what is absent stays. Its type is not changed in v0.1.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New name."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New description."
+          },
+          "options": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OptionsInput",
+                "description": "New settings."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FilterInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AndInput",
+            "description": "Every node must hold."
+          },
+          {
+            "$ref": "#/components/schemas/OrInput",
+            "description": "At least one node must hold."
+          },
+          {
+            "$ref": "#/components/schemas/ConditionInput",
+            "description": "A condition on a field."
+          }
+        ],
+        "description": "A node of a filter as the API carries it."
+      },
+      "FoundRecord": {
+        "type": "object",
+        "description": "A record found.",
+        "required": [
+          "table",
+          "record",
+          "primary"
+        ],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "`tbl_…`."
+          },
+          "record": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "primary": {
+            "$ref": "#/components/schemas/Fragment",
+            "description": "The primary field as text, with what was found in it."
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`fld_…` of the other field where the text was found, when it was not found in the\nprimary field."
+          },
+          "fragment": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Fragment",
+                "description": "The piece of that field around what was found."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Fragment": {
+        "type": "object",
+        "description": "A piece of text and what was found in it.",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text; `…` where it is cut."
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              }
+            },
+            "description": "What was found: `[start, end)` in characters (Unicode scalar values) of `text`,\nin order, never overlapping."
+          }
+        }
+      },
+      "GrantInput": {
+        "type": "object",
+        "description": "A role to give or change.",
+        "required": [
+          "user",
+          "role"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "role": {
+            "type": "string",
+            "description": "`reader`, `commenter`, `editor`, `creator` or `owner`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GrantOut": {
+        "type": "object",
+        "description": "A personal role on a workspace or a base.",
+        "required": [
+          "user",
+          "role"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User",
+            "description": "The person."
+          },
+          "role": {
+            "type": "string",
+            "description": "The role."
+          }
+        }
+      },
+      "GroupHeader": {
+        "type": "object",
+        "description": "A header of a group.",
+        "required": [
+          "level",
+          "values",
+          "count",
+          "summaries"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 — the first level of groups, up to 3; 0 — all the records.",
+            "minimum": 0
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "The values of the group and of the groups it is in, from the first level, in the\nforms of the values of records; `null` — empty. A date and time is grouped by its\nday in the time zone of the organization, a text by its first 128 characters."
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records in the group."
+          },
+          "summaries": {
+            "type": "object",
+            "description": "Summaries by `fld_…` or name: counts and numbers as numbers, percents with one\ndecimal place, dates as text; `null` — nothing to sum up."
+          }
+        }
+      },
+      "Groups": {
+        "type": "object",
+        "description": "The headers of groups and the summary of all the records.",
+        "required": [
+          "total",
+          "groups",
+          "exact",
+          "truncated"
+        ],
+        "properties": {
+          "total": {
+            "$ref": "#/components/schemas/GroupHeader",
+            "description": "All the records: level 0, no values."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupHeader"
+            },
+            "description": "Headers of groups of every level, each before the groups inside it, in the order of\nthe groups; at most 2000."
+          },
+          "exact": {
+            "type": "boolean",
+            "description": "`false` — the query did not fit its time: `total.count` is the estimate of the\nplanner, there are no summaries and no groups."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "More groups than an answer holds: the last ones are left out."
+          }
+        }
+      },
+      "Import": {
+        "type": "object",
+        "description": "An import.",
+        "required": [
+          "id",
+          "mode",
+          "status",
+          "file_name",
+          "records_done",
+          "records_rejected",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`imp_…`."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ImportMode",
+            "description": "Where the records go."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImportStatus",
+            "description": "Where it is."
+          },
+          "file_name": {
+            "type": "string",
+            "description": "The name of the file."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`tbl_…` of the table, when there is one."
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ImportSource",
+                "description": "The file as it was read."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportColumn"
+            },
+            "description": "Its columns."
+          },
+          "preview": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Its first rows of data."
+          },
+          "records_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Rows of data."
+          },
+          "mapping": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ImportMapping",
+                "description": "The mapping: proposed by the analysis, changed by the author."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "records_done": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Records written."
+          },
+          "records_rejected": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Values that did not fit: their cells stay empty, the report lists them."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it failed."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was asked for, RFC 3339."
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RejectedValue"
+            },
+            "description": "The first values that did not fit: why the import stopped, or what its report holds."
+          },
+          "report": {
+            "type": "boolean",
+            "description": "The report of every value that did not fit: `GET /imports/{import}/report`."
+          },
+          "undo_until": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Until when its records may be deleted by `POST /imports/{import}/undo`, RFC 3339."
+          }
+        }
+      },
+      "ImportColumn": {
+        "type": "object",
+        "description": "A column of the file.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its header."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type guessed by its first 1000 values: `single_line_text`, `long_text`, `number`,\n`date`, `date_time`, `checkbox`, `single_select`."
+          },
+          "places": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Decimal places of its numbers.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its different values, for choices."
+          }
+        }
+      },
+      "ImportMapping": {
+        "type": "object",
+        "description": "The choice of the author (`PATCH /imports/{import}`); the analysis proposes one.",
+        "properties": {
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The sheet of XLSX; another one reads the file again."
+          },
+          "header": {
+            "type": "boolean",
+            "description": "The first row is the row of headers; a change reads the file again."
+          },
+          "table_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the new table."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnMapping"
+            },
+            "description": "The columns, in the order of the fields of a new table."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportMode": {
+        "type": "string",
+        "description": "Where the records go.",
+        "enum": [
+          "new_table",
+          "append"
+        ]
+      },
+      "ImportSource": {
+        "type": "object",
+        "description": "The file as the analysis read it.",
+        "required": [
+          "format"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "description": "`csv` or `xlsx`."
+          },
+          "encoding": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The encoding of CSV: `utf-8` or `windows-1251`."
+          },
+          "separator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The separator of CSV."
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The sheets of XLSX."
+          }
+        }
+      },
+      "ImportStatus": {
+        "type": "string",
+        "description": "Where an import is.",
+        "enum": [
+          "analyzing",
+          "ready",
+          "running",
+          "paused",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "undoing",
+          "undone"
+        ]
+      },
+      "InvitationInput": {
+        "type": "object",
+        "description": "An invitation: into the organization (administrator) or straight into a workspace or a\nbase with a role (who manages its members).",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail of the person."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "workspace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`wsp_…` to invite into."
+          },
+          "base": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`bas_…` to invite into."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`reader`, `commenter`, `editor`, `creator` or `owner`; required with a workspace or\na base."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvitationOut": {
+        "type": "object",
+        "description": "The result of an invitation; the link itself goes only by mail.",
+        "required": [
+          "user",
+          "delivery"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User",
+            "description": "The invited account."
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/Delivery",
+            "description": "`mail`, `failed` (try again) or `off` (the console issues the link)."
+          }
+        }
+      },
+      "LoginBody": {
+        "type": "object",
+        "description": "Login with e-mail and password.",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail of the account."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Its password."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Me": {
+        "type": "object",
+        "description": "The account behind a session, as the interface shows it.",
+        "required": [
+          "display_name",
+          "email",
+          "is_org_admin"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail."
+          },
+          "is_org_admin": {
+            "type": "boolean",
+            "description": "Administrator of the organization."
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The language of the interface the person chose: `ru` or `en`; none — the one of the\nbrowser."
+          }
+        }
+      },
+      "MeChange": {
+        "type": "object",
+        "description": "A change of the settings of one's own account (`PATCH /me`).",
+        "properties": {
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The language of the interface: `ru`, `en`, or `null` for the one of the browser."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NameBody": {
+        "type": "object",
+        "description": "A name of a new or renamed object.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 200 characters; spaces around it are dropped."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewExport": {
+        "type": "object",
+        "description": "An export of a view (`POST /views/{view}/exports`): its records and visible fields, in\nits order; a filter, a sort and a search of the tab instead of the view's, as the grid\nreads them.",
+        "required": [
+          "format"
+        ],
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ExportFormat",
+            "description": "`csv` or `xlsx`."
+          },
+          "separator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The separator of CSV: `;` (Excel in Russian, numbers with a decimal comma) or `,`."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "A filter of the tab joined with the view's by «and»."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "A sort of the tab instead of the view's."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A search of the view."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewImport": {
+        "type": "object",
+        "description": "An import of an uploaded file (`POST /bases/{base}/imports` into a new table,\n`POST /tables/{table}/imports` into an existing one).",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "`fil_…` of a file the one who asks uploaded for an import."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewRecord": {
+        "type": "object",
+        "description": "A new record: values by field id or name.",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Values by `fld_…` or name."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewRecords": {
+        "type": "object",
+        "description": "New records.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewRecord"
+            },
+            "description": "Up to 1000 records."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the same table: the records go right before it in the manual order, one\nafter another. Without `before` and `after` — at the end."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the same table: the records go right after it; not with `before`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewUpload": {
+        "type": "object",
+        "description": "An upload asked for (`POST /uploads`): the bytes follow by `PUT /uploads/{upload}`.",
+        "required": [
+          "purpose",
+          "name",
+          "size"
+        ],
+        "properties": {
+          "purpose": {
+            "$ref": "#/components/schemas/UploadPurpose",
+            "description": "What the file is for."
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Its size in bytes.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Operation": {
+        "type": "object",
+        "description": "A structure operation carried out in the background.",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`opr_…`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What it does, e.g. `create_base`."
+          },
+          "status": {
+            "type": "string",
+            "description": "`pending`, `running`, `succeeded` or `failed`."
+          },
+          "object": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public id of the created object, once it succeeded."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Code of the error of a failed operation, e.g. `forbidden`."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was requested, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it ended, RFC 3339."
+          }
+        }
+      },
+      "OptionsInput": {
+        "type": "object",
+        "description": "Settings of a field: `precision` of a number (0–8), `choices` of a single select — the\nwhole list in its order; a choice left out is removed.",
+        "properties": {
+          "precision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Decimal places of a number.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ChoiceInput"
+            },
+            "description": "Choices of a single select."
+          }
+        },
+        "additionalProperties": false
+      },
+      "OptionsOut": {
+        "type": "object",
+        "description": "Settings of a field.",
+        "properties": {
+          "precision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Decimal places of a number.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ChoiceOut"
+            },
+            "description": "Choices of a single select."
+          }
+        }
+      },
+      "OrInput": {
+        "type": "object",
+        "description": "`{\"or\": [...]}`.",
+        "required": [
+          "or"
+        ],
+        "properties": {
+          "or": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterInput"
+            },
+            "description": "The nodes."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Page": {
+        "type": "object",
+        "description": "A page of records.",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "Records in the order of the view."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Give it as `cursor` for the next page; absent on the last one."
+          }
+        }
+      },
+      "PermissionRow": {
+        "type": "object",
+        "description": "A row: an action checked by role, or a right that comes from elsewhere.",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Description."
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Stable name of the action (`record.write`); absent for rights from elsewhere."
+          },
+          "min_role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The lowest role that may do it."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`workspace` or `base`: where the role is taken from."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "Numbers of the footnotes."
+          },
+          "by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the right depends on, for rights from elsewhere."
+          }
+        }
+      },
+      "PermissionSection": {
+        "type": "object",
+        "description": "A section of the matrix.",
+        "required": [
+          "title",
+          "rows"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Heading."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionRow"
+            },
+            "description": "Rows."
+          }
+        }
+      },
+      "Permissions": {
+        "type": "object",
+        "description": "The matrix «role × action» of the installed version.",
+        "required": [
+          "roles",
+          "sections",
+          "notes"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles from the lowest to the highest; each includes the rights of the previous one."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSection"
+            },
+            "description": "Sections of the matrix in the order of the documentation."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Footnotes; `notes` of the actions refer to them by number from 1."
+          }
+        }
+      },
+      "PreconditionFailed": {
+        "type": "object",
+        "description": "The answer `412 precondition-failed` of a write with `if`: nothing was applied.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "errors",
+          "current"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`urn:xtab:problem:precondition-failed`."
+          },
+          "title": {
+            "type": "string",
+            "description": "`Precondition Failed`."
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "`412`.",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionFailed"
+            },
+            "description": "The fields whose values differ, by record."
+          },
+          "current": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "The records of `errors` as they are now."
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Body of an error response: RFC 9457 problem details with the problem types of the API.",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`urn:xtab:problem:<code>`."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short summary of the status."
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "HTTP status.",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "description": "Problems of individual fields."
+          }
+        }
+      },
+      "Record": {
+        "type": "object",
+        "description": "A record.",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "fields"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was created, RFC 3339."
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who created it, `usr_…`."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "When it was last changed."
+          },
+          "updated_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who last changed it."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Values of the fields; an empty one is `null`."
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its colour by the colour of the view; absent — none."
+          }
+        }
+      },
+      "RecordCount": {
+        "type": "object",
+        "description": "A count of records (`POST /tables/{table}/records/count`): the filter joined with the\nfilter of the view by «and»; without a view — the filter alone.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` of the table: its filter."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "The filter, as in a query of records."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A search: records whose shown text, long text, choice or primary field holds it,\nregardless of case and of `ё`; up to 200 characters."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordGroups": {
+        "type": "object",
+        "description": "Groups of records and their summaries (`POST /tables/{table}/records/groups`):\nthe filter joined with the filter of the view by «and»; groups and summaries instead of\nthe view's when given. Without groups — the summary row of the whole view.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` of the table: its filter, groups and summaries."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "The filter, as in a query of records."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "groups": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Groups instead of the view's, up to three levels."
+          },
+          "summaries": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SummaryInput"
+            },
+            "description": "Summaries instead of the view's."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A search: records whose shown text, long text, choice or primary field holds it,\nregardless of case and of `ё`; up to 200 characters."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordQuery": {
+        "type": "object",
+        "description": "A query of records (`POST /tables/{table}/records/query`): `GET …/records` with a filter\nin the body, joined by «and» with the filter of the view.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` of the table: its filter and sort."
+          },
+          "fields": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "`fld_…` or names of the fields to return; all by default."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "The filter, up to 100 conditions and three levels of groups."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "The sort instead of the view's, up to five keys."
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Records per page, 1–500, 100 by default."
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`next_cursor` of the previous page."
+          },
+          "position": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Number of a record in the order, from 0: the page starts at it instead of a cursor."
+          },
+          "groups": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Groups instead of the view's, up to three levels (a temporary grouping). Records of\na grouped view come in the order of the headers of its groups, then of the sort."
+          },
+          "group": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object"
+            },
+            "description": "The records of one group: its values, one per level of the groups, from the first;\n`null` — the group of empty values."
+          },
+          "color": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ColorInput",
+                "description": "The colour instead of the view's (a temporary colour)."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A search: records whose shown text, long text, choice or primary field holds it,\nregardless of case and of `ё`; up to 200 characters."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Records": {
+        "type": "object",
+        "description": "Records written.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "In the order of the request."
+          }
+        }
+      },
+      "RejectedValue": {
+        "type": "object",
+        "description": "A value of the file that did not fit its field: its cell stays empty.",
+        "required": [
+          "row",
+          "column",
+          "value",
+          "reason"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The row of the file, from 1, the row of headers counted."
+          },
+          "column": {
+            "type": "string",
+            "description": "The header of the column."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value, cut to 200 characters."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it did not fit."
+          }
+        }
+      },
+      "ResetBody": {
+        "type": "object",
+        "description": "Set a new password by a reset link.",
+        "required": [
+          "token",
+          "password"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token from the fragment of the reset link."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "The new password."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResetRequestBody": {
+        "type": "object",
+        "description": "Request a password reset link.",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail of the account."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RowHeight": {
+        "type": "string",
+        "description": "Height of the rows of a grid.",
+        "enum": [
+          "short",
+          "medium",
+          "tall"
+        ]
+      },
+      "RunImport": {
+        "type": "object",
+        "description": "A run of an import (`POST /imports/{import}/run`).",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Write even though more than a tenth of the values checked do not fit."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SortInput": {
+        "type": "object",
+        "description": "A key of a sort as the API carries it.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` or the name of the field."
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction",
+            "description": "`asc` (default) or `desc`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "StepUpBody": {
+        "type": "object",
+        "description": "Confirm the person again before a sensitive action: the password\nof the account of the session.",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "The password of the account."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SummaryInput": {
+        "type": "object",
+        "description": "A summary of a field as the API carries it.",
+        "required": [
+          "field",
+          "function"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` or the name of the field."
+          },
+          "function": {
+            "type": "string",
+            "description": "`empty`, `filled`, `unique`, `percent_empty`, `percent_filled`; for numbers also\n`sum`, `average`, `min`, `max`; for dates `earliest`, `latest`, `range`; for a flag\nonly `checked` and `unchecked`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Table": {
+        "type": "object",
+        "description": "A table with its fields and shared views.",
+        "required": [
+          "id",
+          "base",
+          "name",
+          "description",
+          "fields",
+          "views"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tbl_…`."
+          },
+          "base": {
+            "type": "string",
+            "description": "Its base, `bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description."
+          },
+          "primary_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its primary field, `fld_…`."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Field"
+            },
+            "description": "Fields in their order."
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/View"
+            },
+            "description": "Shared views in their order."
+          },
+          "manage_views": {
+            "type": "boolean",
+            "description": "Whether the one who asks may change its shared views (creator of the base); others\nfilter and sort for themselves only."
+          }
+        }
+      },
+      "TableInput": {
+        "type": "object",
+        "description": "A new table; without `fields` it gets the primary field «Название».",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name, unique in the base regardless of case."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldInput"
+            },
+            "description": "Its fields; the first one is primary."
+          }
+        },
+        "additionalProperties": false
+      },
+      "TablePatch": {
+        "type": "object",
+        "description": "Changes of a table; what is absent stays.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New name."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New description."
+          }
+        },
+        "additionalProperties": false
+      },
+      "UndoImport": {
+        "type": "object",
+        "description": "An undo of an import (`POST /imports/{import}/undo`).",
+        "properties": {
+          "keep_changed": {
+            "type": "boolean",
+            "description": "Keep the records changed since the import; `true` by default."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Upload": {
+        "type": "object",
+        "description": "An upload on its way.",
+        "required": [
+          "upload",
+          "file",
+          "max_size"
+        ],
+        "properties": {
+          "upload": {
+            "type": "string",
+            "description": "`upl_…`: where the bytes go."
+          },
+          "file": {
+            "type": "string",
+            "description": "`fil_…`: the file they make."
+          },
+          "max_size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The most bytes taken.",
+            "minimum": 0
+          }
+        }
+      },
+      "UploadPurpose": {
+        "type": "string",
+        "description": "What a file is uploaded for.",
+        "enum": [
+          "import"
+        ]
+      },
+      "UploadedFile": {
+        "type": "object",
+        "description": "A file uploaded.",
+        "required": [
+          "id",
+          "name",
+          "size",
+          "content_type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`fil_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Its size in bytes.",
+            "minimum": 0
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Its type by its first bytes: `text/csv` or the type of XLSX."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "A member of the organization.",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "status",
+          "is_org_admin"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail."
+          },
+          "status": {
+            "type": "string",
+            "description": "`invited`, `active`, `blocked` or `deactivated`."
+          },
+          "is_org_admin": {
+            "type": "boolean",
+            "description": "Administrator of the organization."
+          }
+        }
+      },
+      "UsersPage": {
+        "type": "object",
+        "description": "A page of members.",
+        "required": [
+          "users"
+        ],
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            },
+            "description": "Members by number."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Give it as `after` for the next page; absent on the last one."
+          }
+        }
+      },
+      "View": {
+        "type": "object",
+        "description": "A shared view.",
+        "required": [
+          "id",
+          "table",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`viw_…`."
+          },
+          "table": {
+            "type": "string",
+            "description": "Its table, `tbl_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "type": {
+            "type": "string",
+            "description": "`grid`."
+          },
+          "config": {
+            "$ref": "#/components/schemas/ViewConfig",
+            "description": "Its settings."
+          }
+        }
+      },
+      "ViewColumn": {
+        "type": "object",
+        "description": "A column of a view: its field, its width and whether it is hidden.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Width in CSS pixels, 60…600; without it — 180.",
+            "minimum": 0
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Hidden in this view; the primary field never is."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewConfig": {
+        "type": "object",
+        "description": "The settings of a grid view: the order, widths and visibility\nof its columns, the height of its rows, its filter, its sort, its groups, the summaries of\nits fields and the colour of its records.",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewColumn"
+            },
+            "description": "Columns in their order; fields not listed follow in the order of the table."
+          },
+          "row_height": {
+            "$ref": "#/components/schemas/RowHeight",
+            "description": "Height of the rows."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Which records the view shows."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "The order of the records, up to five keys; none — the manual order."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Groups of the records, up to three levels; within a group the sort applies."
+          },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SummaryInput"
+            },
+            "description": "Summaries of fields under their columns and in the headers of groups."
+          },
+          "color": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ColorInput",
+                "description": "The colour of the records."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewInput": {
+        "type": "object",
+        "description": "A new view.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "type": {
+            "type": "string",
+            "description": "`grid` — the only type of v0.2."
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A view of the same table (`viw_…`) whose settings the new one copies: «duplicate»."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewPatch": {
+        "type": "object",
+        "description": "A change of a view: its name, its settings, or both.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A new name."
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ViewConfig",
+                "description": "New settings, whole: they replace the old ones."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Workspace": {
+        "type": "object",
+        "description": "A workspace with the bases the user may open.",
+        "required": [
+          "id",
+          "name",
+          "bases"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`wsp_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name."
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaseRef"
+            },
+            "description": "Its bases visible to the user, by name."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-xtab_session",
+        "description": "Session of the browser; changing requests also carry `X-Xtab-Request: 1`"
+      }
+    }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Login and session"
+    },
+    {
+      "name": "me",
+      "description": "The account of the session"
+    },
+    {
+      "name": "meta",
+      "description": "Service information"
+    },
+    {
+      "name": "records",
+      "description": "Records of tables"
+    },
+    {
+      "name": "imports",
+      "description": "Uploads of files and imports of CSV and XLSX"
+    },
+    {
+      "name": "members",
+      "description": "Members of the organization and their roles"
+    },
+    {
+      "name": "structure",
+      "description": "Workspaces, bases, tables, fields, views and operations on the structure"
+    }
+  ]
+}

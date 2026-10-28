@@ -1,0 +1,6244 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Xtab API",
+    "description": "REST API xtab: рабочие пространства, базы, таблицы, поля, представления, записи, импорт и экспорт, участники и их роли.",
+    "license": {
+      "name": "LicenseRef-Proprietary"
+    },
+    "version": "0.2.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Относительно адреса установки"
+    }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Вход: cookie сессии `__Host-xtab_session`. Любая неудача — неверный пароль, неизвестная или неактивная учётная запись — получает одинаковый ответ за одинаковое время.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Вход выполнен, cookie сессии установлена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, с Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "overloaded, с Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Завершить сессию; браузер очищает свой кэш и хранилище (`Clear-Site-Data`).",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Выход выполнен, cookie удалена"
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/step-up": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Повторно подтвердить личность паролем: в течение десяти минут сессия может выполнять действия, которым это нужно, например экспорт больше 1000 записей. Неверный пароль сессию не завершает; попытки учитываются в лимитах входа.",
+        "operationId": "step_up",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Подтверждено"
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: wrong-password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, с Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/invitations/accept": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Задать первый пароль приглашённой учётной записи и войти.",
+        "operationId": "accept_invitation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Учётная запись активна, вход выполнен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: token-invalid или правило пароля",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/password/reset-request": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Запросить письмо со ссылкой для сброса пароля. Всегда `202` и сразу: существует ли учётная запись, не раскрывается.",
+        "operationId": "reset_request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; письмо отправлено, если учётной записи оно положено"
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/auth/password/reset": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Задать новый пароль; все сессии учётной записи завершаются.",
+        "operationId": "reset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Пароль задан, войдите снова"
+          },
+          "422": {
+            "description": "validation-failed: token-invalid или правило пароля",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Учётная запись сессии.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Учётная запись",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Изменить настройки своей учётной записи: язык интерфейса.",
+        "operationId": "change_me",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Учётная запись с её настройками",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: язык, которого нет в интерфейсе",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meta/permissions": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Матрица прав этой версии, построенная из кода: права, которые проверяет эта сборка, без ещё запланированных; доступна всем, кто вошёл, — правила доступа не секрет. Тексты — на языке пользователя.",
+        "operationId": "permissions",
+        "responses": {
+          "200": {
+            "description": "Матрица",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Permissions"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Рабочие пространства, где у пользователя есть роль — в самом пространстве или в одной из его баз, — вместе с этими базами.",
+        "operationId": "list_workspaces",
+        "responses": {
+          "200": {
+            "description": "Рабочие пространства по названию",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Workspace"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Создать рабочее пространство; его создатель становится владельцем. Может любой активный пользователь.",
+        "operationId": "create_workspace",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Создано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Рабочее пространство со всеми его базами; нужна роль в самом пространстве.",
+        "operationId": "get_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Рабочее пространство",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: не существует или не видно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Удалить рабочее пространство с его базами (владелец); данные хранятся, пока их не удалит корзина (v1).",
+        "operationId": "delete_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Переименовать рабочее пространство (владелец).",
+        "operationId": "rename_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Переименовано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/bases": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Создать базу (создатель пространства): `202` с операцией, которая создаёт её схему; база появляется в `object` операции после её успешного завершения.",
+        "operationId": "create_base",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "База (читатель базы).",
+        "operationId": "get_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "База",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: не существует или не видно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Удалить базу (владелец); данные хранятся, пока их не удалит корзина (v1).",
+        "operationId": "delete_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Переименовать базу (создатель).",
+        "operationId": "rename_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Переименовано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Base"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/{operation}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Состояние операции над структурой; видно тому, кто может открыть её базу, или, пока база создаётся, видеть её рабочее пространство.",
+        "operationId": "get_operation",
+        "parameters": [
+          {
+            "name": "operation",
+            "in": "path",
+            "description": "`opr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Операция",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: не существует или не видно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/tables": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Создать таблицу (создатель базы): `202` с операцией; таблица появляется в `object` операции после её успешного завершения. Без `fields` в ней будет поле «Название».",
+        "operationId": "create_table",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, описание или поля",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Таблица с её полями и общими представлениями (читатель базы).",
+        "operationId": "get_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Таблица",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: не существует или не видно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Удалить таблицу с её полями и представлениями (создатель базы); данные хранятся, пока их не удалит корзина (v1).",
+        "operationId": "delete_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Переименовать таблицу или изменить её описание (создатель базы).",
+        "operationId": "update_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TablePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название занято или недопустимо, описание слишком длинное",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/fields": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Добавить поле в конец таблицы, перед или после одного из её полей (создатель базы): `202` с операцией; поле появляется в `object` операции после её успешного завершения.",
+        "operationId": "add_field",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, тип, описание, настройки, before или after",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fields/{field}": {
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Удалить поле (создатель базы); главное поле удалить нельзя.",
+        "operationId": "delete_field",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: главное поле",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Переименовать поле, изменить его описание или настройки (создатель базы). Варианты поля «один из списка» передаются списком целиком: существующие — с `id`, новые — без него.",
+        "operationId": "update_field",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Field"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, описание или настройки",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/views": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Создать общее представление таблицы (создатель базы); в v0.2 — `grid`. С `from` новое представление копирует настройки указанного представления той же таблицы.",
+        "operationId": "create_view",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Создано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, тип или from",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Общее представление (читатель базы).",
+        "operationId": "get_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Представление",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: не существует или не видно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Удалить общее представление (создатель базы); у таблицы остаётся хотя бы одно.",
+        "operationId": "delete_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: последнее представление таблицы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Переименовать общее представление или заменить его настройки (создатель базы): порядок, ширину и видимость колонок и высоту строк.",
+        "operationId": "update_view",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ViewPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/View"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название или настройки",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/invitations": {
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Пригласить человека. Без `workspace` и `base` — только администратор организации; с одним из них — тот, кто управляет его участниками, с ролью по правилам выдачи. Активного участника повторно не приглашают: роль выдаётся через `…/grants`.",
+        "operationId": "invite",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Приглашение отправлено; ссылка ушла по почте (см. `delivery`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор или роль выше той, что может выдать приглашающий",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: рабочее пространство или база",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "already-member",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: email, имя, роль",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/users": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Участники организации; их видит каждый участник.",
+        "operationId": "list_users",
+        "parameters": [
+          {
+            "name": "after",
+            "in": "path",
+            "description": "`usr_…` последнего участника предыдущей страницы.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Участников на странице, 1–500, по умолчанию 100.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница участников по номеру",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "malformed-request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/grants": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Личные роли в рабочем пространстве; их видит каждый его участник.",
+        "operationId": "workspace_grants",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Роли по имени",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantOut"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Выдать или изменить роль в рабочем пространстве: не выше собственной роли выдающего; создатель выдаёт роли до «Редактора» и не трогает создателей и владельцев; последний владелец остаётся.",
+        "operationId": "set_workspace_grant",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Роль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unknown-user, роль, last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Отозвать роль в рабочем пространстве; свою роль может отозвать каждый, кроме последнего владельца.",
+        "operationId": "remove_workspace_grant",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principal",
+            "in": "path",
+            "description": "`usr_…`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозвано"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/grants": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Личные роли в базе (без унаследованных от рабочего пространства).",
+        "operationId": "base_grants",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Роли по имени",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantOut"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Выдать или изменить роль в базе — по тем же правилам, что в рабочем пространстве.",
+        "operationId": "set_base_grant",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Роль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unknown-user, роль, last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Отозвать роль в базе; свою роль может отозвать каждый, кроме последнего владельца.",
+        "operationId": "remove_base_grant",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "principal",
+            "in": "path",
+            "description": "`usr_…`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозвано"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: last-owner",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Записи таблицы в порядке представления (читатель базы): его фильтр и сортировка, другая сортировка — через `sort=`; страница и курсор следующей.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` таблицы: его фильтр и сортировка.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "fields",
+            "in": "path",
+            "description": "`fld_…` или названия возвращаемых полей через запятую; по умолчанию все.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "path",
+            "description": "`fld_…` или названия полей для сортировки через запятую вместо сортировки представления; `-` перед полем сортирует его по убыванию. Не больше пяти.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "path",
+            "description": "Записей на странице, 1–500, по умолчанию 100.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "path",
+            "description": "`next_cursor` предыдущей страницы.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "in": "path",
+            "description": "Номер записи в порядке представления, с 0: страница начинается с неё вместо курсора; не вместе с `cursor`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Страница записей",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: таблица или представление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: limit, fields, sort или cursor; view-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Создать записи в конце таблицы (редактор базы).",
+        "operationId": "create",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Созданные записи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: ошибки по `records[i].fields.<key>`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Изменить поля записей (редактор базы). С `if` запись меняется, только если в полях всё ещё ожидаемые значения; иначе ничего не применяется и ответ — `412` с текущими записями.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Changes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Записи после изменения",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "precondition-failed: `errors[].record`, `errors[].field` и текущие записи `current`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreconditionFailed"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: ошибки по `records[i]…`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/query": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Записи таблицы по фильтру (читатель базы): `GET …/records` с фильтром в теле, объединённым через «и» с фильтром представления.",
+        "operationId": "query_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Страница записей",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: таблица или представление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: фильтр (с путём к условию), сортировка, limit, поля или курсор; view-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/count": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Число записей запроса (читатель базы): фильтр из тела, объединённый через «и» с фильтром представления; без представления — только фильтр, как считает временный фильтр вкладки. Точно, если укладывается в 2 с, иначе — оценка планировщика с `exact: false`.",
+        "operationId": "count_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordCount"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Число",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Count"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: таблица или представление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: фильтр, с путём к условию",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/groups": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Заголовки групп записей с их итогами (читатель базы): группы и итоги представления или запроса, фильтр из тела, объединённый через «и» с фильтром представления; без групп — строка итогов по всем записям. Точно, если укладывается в 2 с, иначе — оценка планировщика для числа записей с `exact: false`, без итогов и групп.",
+        "operationId": "group_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordGroups"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Заголовки групп",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Groups"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: таблица или представление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: фильтр, группы или итоги, с путём к ошибочной части",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/{record}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Одна запись (читатель базы).",
+        "operationId": "one",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "description": "`rec_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Запись",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/count": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Число записей представления с его фильтром (читатель базы): точно, если укладывается в 2 с, иначе — оценка планировщика с `exact: false`.",
+        "operationId": "count",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Число",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Count"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/delete": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Удалить записи насовсем — в MVP корзины нет (редактор базы).",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Удалённые записи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Deleted"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` не найдена или повторяется",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/search": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Поиск по записям базы (читатель базы): по словоформам и началу последнего слова, иначе по фрагменту; до 20 записей одной таблицы и 50 всего, сначала лучшие.",
+        "operationId": "search_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseSearch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Найденные записи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseFound"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: текст; search-too-heavy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/exports": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Экспорт записей представления в CSV или XLSX в фоне. Для больше 1000 записей нужен `POST /auth/step-up` в течение десяти минут; ответ `202` — экспорт, дальше — `GET /exports/{export}`.",
+        "operationId": "create_export",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Экспорт поставлен в очередь",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Export"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden или step-up-required для больше 1000 записей",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: разделитель, фильтр, сортировка или поиск",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-exports: уже выполняются два",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: нет хранилища файлов",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{export}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Состояние экспорта; видит только тот, кто его запросил.",
+        "operationId": "get_export",
+        "parameters": [
+          {
+            "name": "export",
+            "in": "path",
+            "description": "`exp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Экспорт",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Export"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exports/{export}/file": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Файл готового экспорта как вложение; скачать его может только тот, кто запросил, в течение суток.",
+        "operationId": "export_file",
+        "parameters": [
+          {
+            "name": "export",
+            "in": "path",
+            "description": "`exp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл: CSV или XLSX",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "404": {
+            "description": "not-found: такого экспорта нет, он не готов или его сутки истекли",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: хранилище файлов не отвечает",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Начать загрузку файла для импорта, до 50 МБ; байты передаются следом через `PUT /uploads/{upload}`.",
+        "operationId": "create_upload",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Загрузка и её файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: имя или размер",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-uploads: уже идут четыре",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: нет хранилища файлов",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uploads/{upload}": {
+      "put": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Байты загрузки (`application/octet-stream`). Тип определяется по первым байтам: CSV или XLSX; всё остальное отклоняется и не сохраняется.",
+        "operationId": "put_upload",
+        "parameters": [
+          {
+            "name": "upload",
+            "in": "path",
+            "description": "`upl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Файл загружен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedFile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой загрузки этой учётной записи нет или она завершена",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: unsupported-file или too-large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/imports": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Импорт загруженного файла в новую таблицу базы: файл разбирается в фоне, `GET /imports/{import}` показывает найденное и предложенное сопоставление.",
+        "operationId": "import_new_table",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Импорт разбирается",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: файл",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/imports": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Импорт загруженного файла новыми записями таблицы: как `POST /bases/{base}/imports`, с правом импорта в существующую таблицу.",
+        "operationId": "import_append",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Импорт разбирается",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: файл",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Импорт: файл в том виде, как он прочитан, его первые строки и сопоставление; видит только его автор.",
+        "operationId": "get_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Импорт",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Изменить сопоставление разобранного импорта: название новой таблицы, её поля и типы или поля существующей таблицы, которые заполняет каждая колонка. Другой лист или строка заголовков перечитывает файл (`202`).",
+        "operationId": "change_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Сопоставление принято",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Файл перечитывается",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-ready: импорт не разобран или уже выполняется",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: сопоставление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/run": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Запустить разобранный импорт: его записи пишутся порциями в фоне, новая таблица появляется в базе, когда они записаны. Если больше десятой части значений первых 1000 строк не подходит, импорт останавливается (`paused`), пока его не запустят снова с `confirm`. В организации одновременно выполняются не больше двух импортов.",
+        "operationId": "run_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Импорт выполняется",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: права на импорт больше нет",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-ready: импорт не разобран или уже выполняется",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: сопоставление",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-imports: уже выполняются два",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/cancel": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Остановить импорт: записанное в существующую таблицу остаётся, и его можно отменить; импорт в новую таблицу не оставляет таблицы.",
+        "operationId": "cancel_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Импорт остановлен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-running: импорт уже завершён",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/undo": {
+      "post": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Удалить записи, созданные импортом, в течение суток после него; записи, изменённые с тех пор, остаются, если `keep_changed` не `false`. Записи, созданные не импортом, не затрагиваются никогда.",
+        "operationId": "undo_import",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UndoImport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Записи удаляются",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Import"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "cannot-undo: ничего не записано, уже отменено, таблицы больше нет или сутки истекли",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import}/report": {
+      "get": {
+        "tags": [
+          "imports"
+        ],
+        "summary": "Отчёт о значениях импорта, которые не подошли: CSV со строкой, колонкой, значением и причиной; скачать его может только автор импорта.",
+        "operationId": "import_report",
+        "parameters": [
+          {
+            "name": "import",
+            "in": "path",
+            "description": "`imp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Отчёт",
+            "content": {
+              "text/csv": {}
+            }
+          },
+          "404": {
+            "description": "not-found: такого импорта или отчёта нет",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AcceptBody": {
+        "type": "object",
+        "description": "Принять приглашение: токен из ссылки (только в теле запроса), первый пароль и, по желанию, имя.",
+        "required": [
+          "token",
+          "password"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Токен из фрагмента ссылки-приглашения."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Новый пароль."
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Отображаемое имя, не больше 200 символов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AndInput": {
+        "type": "object",
+        "description": "`{\"and\": [...]}`.",
+        "required": [
+          "and"
+        ],
+        "properties": {
+          "and": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterInput"
+            },
+            "description": "Узлы."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Base": {
+        "type": "object",
+        "description": "База.",
+        "required": [
+          "id",
+          "name",
+          "workspace",
+          "schema_version",
+          "tables"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "workspace": {
+            "type": "string",
+            "description": "Её рабочее пространство, `wsp_…`."
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Растёт с каждым изменением структуры; клиент сравнивает его со своей копией."
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            },
+            "description": "Её таблицы с полями и общими представлениями."
+          }
+        }
+      },
+      "BaseFound": {
+        "type": "object",
+        "description": "Найденные в базе записи, сначала лучшие.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FoundRecord"
+            },
+            "description": "До 20 записей одной таблицы и 50 всего."
+          },
+          "indexing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`tbl_…` таблиц, поиск по которым ещё заполняется: часть их записей может не найтись."
+          },
+          "more_tables": {
+            "type": "boolean",
+            "description": "В базе больше таблиц, чем просматривает один поиск (первые 100 по порядку)."
+          }
+        }
+      },
+      "BaseRef": {
+        "type": "object",
+        "description": "База в списке.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          }
+        }
+      },
+      "BaseSearch": {
+        "type": "object",
+        "description": "Поиск по записям базы: по всем таблицам, которые видит читатель, по словоформам и началу последнего слова; таблица, где слово не нашлось, просматривается по фрагменту.",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст: до 200 символов; ищутся первые 8 его слов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Change": {
+        "type": "object",
+        "description": "Изменение одной записи: задаются только переданные поля; `null` очищает поле.",
+        "required": [
+          "id",
+          "fields"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Новые значения по `fld_…` или названию."
+          },
+          "if": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Применить, только если в этих полях всё ещё эти значения; `null` — пусто."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Changes": {
+        "type": "object",
+        "description": "Изменения записей.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "До 1000 записей."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChoiceInput": {
+        "type": "object",
+        "description": "Вариант поля «один из списка». Без `id` — новый.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`opt_…` существующего варианта; у нового отсутствует."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название, уникальное в поле без учёта регистра."
+          },
+          "color": {
+            "type": "string",
+            "description": "`gray` (по умолчанию), `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChoiceOut": {
+        "type": "object",
+        "description": "Вариант поля «один из списка».",
+        "required": [
+          "id",
+          "name",
+          "color"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`opt_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "color": {
+            "type": "string",
+            "description": "Цвет."
+          }
+        }
+      },
+      "ColorByField": {
+        "type": "object",
+        "description": "`{\"field\": …}`.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` или название поля «один из списка»."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColorByRules": {
+        "type": "object",
+        "description": "`{\"rules\": […]}`.",
+        "required": [
+          "rules"
+        ],
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColorRuleInput"
+            },
+            "description": "До десяти правил, по порядку."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColorInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ColorByField",
+            "description": "`{\"field\"}`: цвет варианта поля «один из списка»."
+          },
+          {
+            "$ref": "#/components/schemas/ColorByRules",
+            "description": "`{\"rules\": [...]}`: цвет первого правила, которому соответствует запись."
+          }
+        ],
+        "description": "Цвет записей в API: по полю «один из списка» или по правилам."
+      },
+      "ColorRuleInput": {
+        "type": "object",
+        "description": "Правило цвета: записи, подходящие под фильтр, получают цвет.",
+        "required": [
+          "filter",
+          "color"
+        ],
+        "properties": {
+          "filter": {
+            "$ref": "#/components/schemas/FilterInput",
+            "description": "Фильтр, как у представления."
+          },
+          "color": {
+            "type": "string",
+            "description": "`gray`, `red`, `orange`, `yellow`, `green`, `teal`, `blue`, `purple`, `pink`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColumnMapping": {
+        "type": "object",
+        "description": "Куда идёт колонка файла.",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "source": {
+            "type": "integer",
+            "description": "Номер колонки в файле, с 0.",
+            "minimum": 0
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "В существующую таблицу: `fld_…` поля, которое она заполняет; без него колонка не импортируется."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "В новую таблицу: название её поля."
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "В новую таблицу: тип её поля."
+          },
+          "skip": {
+            "type": "boolean",
+            "description": "В новую таблицу: колонка не импортируется."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConditionFailed": {
+        "type": "object",
+        "description": "Запись, у которой не выполнилось условие.",
+        "required": [
+          "record",
+          "field",
+          "code"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "field": {
+            "type": "string",
+            "description": "Поле условия — `fld_…` или название, как в запросе."
+          },
+          "code": {
+            "type": "string",
+            "description": "`condition-failed`."
+          }
+        }
+      },
+      "ConditionInput": {
+        "type": "object",
+        "description": "`{\"field\", \"op\", \"value\"}`.",
+        "required": [
+          "field",
+          "op"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` или название поля."
+          },
+          "op": {
+            "type": "string",
+            "description": "Оператор: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`…"
+          },
+          "value": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Значение: по типу поля и оператору; если его нет или `null`, условие ещё заполняется и пока не фильтрует."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Count": {
+        "type": "object",
+        "description": "Число записей представления.",
+        "required": [
+          "count",
+          "exact"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Число."
+          },
+          "exact": {
+            "type": "boolean",
+            "description": "`false` — оценка планировщика: точный подсчёт не уложился в своё время."
+          }
+        }
+      },
+      "DeleteRecords": {
+        "type": "object",
+        "description": "Удаляемые записи.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…`, до 1000."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Deleted": {
+        "type": "object",
+        "description": "Удалённые записи.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` удалённых записей."
+          }
+        }
+      },
+      "Delivery": {
+        "type": "string",
+        "description": "Как приглашение дошло до человека.",
+        "enum": [
+          "mail",
+          "failed",
+          "off"
+        ]
+      },
+      "Direction": {
+        "type": "string",
+        "description": "Направление ключа сортировки; пустые значения в любом случае последние.",
+        "enum": [
+          "asc",
+          "desc"
+        ]
+      },
+      "Export": {
+        "type": "object",
+        "description": "Экспорт.",
+        "required": [
+          "id",
+          "status",
+          "format",
+          "records_done",
+          "expires_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`exp_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExportStatus",
+            "description": "На каком этапе."
+          },
+          "format": {
+            "$ref": "#/components/schemas/ExportFormat",
+            "description": "Формат."
+          },
+          "records_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Сколько записей предстоит записать, если известно."
+          },
+          "records_done": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Записано записей."
+          },
+          "file_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Имя файла, когда он готов."
+          },
+          "size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Его размер в байтах."
+          },
+          "expires_at": {
+            "type": "string",
+            "description": "Файл скачивается через `GET /exports/{export}/file` до этого момента, RFC 3339."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Причина сбоя."
+          }
+        }
+      },
+      "ExportFormat": {
+        "type": "string",
+        "description": "Формат файла.",
+        "enum": [
+          "csv",
+          "xlsx"
+        ]
+      },
+      "ExportStatus": {
+        "type": "string",
+        "description": "На каком этапе экспорт.",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ]
+      },
+      "Field": {
+        "type": "object",
+        "description": "Поле.",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "type",
+          "options",
+          "primary",
+          "read_only"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание."
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип; могут появиться новые типы — клиент должен их принимать."
+          },
+          "options": {
+            "$ref": "#/components/schemas/OptionsOut",
+            "description": "Настройки."
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "Главное поле таблицы."
+          },
+          "read_only": {
+            "type": "boolean",
+            "description": "Значения пишет система (автономер, системные поля)."
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "description": "Одна ошибка поля (элемент `errors[]`).",
+        "required": [
+          "field",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Имя или путь поля в запросе, например `records[3].fields.Сумма`."
+          },
+          "code": {
+            "type": "string",
+            "description": "Постоянный код для программ."
+          },
+          "message": {
+            "type": "string",
+            "description": "Текст для человека."
+          }
+        }
+      },
+      "FieldInput": {
+        "type": "object",
+        "description": "Новое поле.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название, уникальное в таблице без учёта регистра."
+          },
+          "type": {
+            "type": "string",
+            "description": "`single_line_text`, `long_text`, `number`, `checkbox`, `single_select`, `date`, `date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание."
+          },
+          "options": {
+            "$ref": "#/components/schemas/OptionsInput",
+            "description": "Настройки."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить поле перед этим (`fld_…`) в порядке таблицы; без `before` и `after` оно встаёт в конец. Только при добавлении одного поля."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить поле после этого (`fld_…`); не вместе с `before`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FieldPatch": {
+        "type": "object",
+        "description": "Изменения поля; чего нет, то остаётся. Тип в v0.1 не меняется.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое название."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое описание."
+          },
+          "options": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/OptionsInput",
+                "description": "Новые настройки."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FilterInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AndInput",
+            "description": "Должны выполняться все узлы."
+          },
+          {
+            "$ref": "#/components/schemas/OrInput",
+            "description": "Должен выполняться хотя бы один узел."
+          },
+          {
+            "$ref": "#/components/schemas/ConditionInput",
+            "description": "Условие по полю."
+          }
+        ],
+        "description": "Узел фильтра в API."
+      },
+      "FoundRecord": {
+        "type": "object",
+        "description": "Найденная запись.",
+        "required": [
+          "table",
+          "record",
+          "primary"
+        ],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "`tbl_…`."
+          },
+          "record": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "primary": {
+            "$ref": "#/components/schemas/Fragment",
+            "description": "Главное поле текстом, с тем, что в нём найдено."
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`fld_…` другого поля, где найден текст, если он не найден в главном поле."
+          },
+          "fragment": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Fragment",
+                "description": "Фрагмент этого поля вокруг найденного."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "Fragment": {
+        "type": "object",
+        "description": "Фрагмент текста и то, что в нём найдено.",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст; `…` там, где он обрезан."
+          },
+          "hits": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              }
+            },
+            "description": "Найденное: `[start, end)` в символах (скалярных значениях Unicode) `text`, по порядку, без перекрытий."
+          }
+        }
+      },
+      "GrantInput": {
+        "type": "object",
+        "description": "Выдаваемая или изменяемая роль.",
+        "required": [
+          "user",
+          "role"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "role": {
+            "type": "string",
+            "description": "`reader`, `commenter`, `editor`, `creator` или `owner`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GrantOut": {
+        "type": "object",
+        "description": "Личная роль в рабочем пространстве или базе.",
+        "required": [
+          "user",
+          "role"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User",
+            "description": "Человек."
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль."
+          }
+        }
+      },
+      "GroupHeader": {
+        "type": "object",
+        "description": "Заголовок группы.",
+        "required": [
+          "level",
+          "values",
+          "count",
+          "summaries"
+        ],
+        "properties": {
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 — первый уровень групп, до 3; 0 — все записи.",
+            "minimum": 0
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Значения группы и групп, в которые она входит, начиная с первого уровня, в формах значений записей; `null` — пусто. Дата и время группируются по дню в часовом поясе организации, текст — по первым 128 символам."
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Записей в группе."
+          },
+          "summaries": {
+            "type": "object",
+            "description": "Итоги по `fld_…` или названию: количества и числа — числами, проценты — с одним знаком после запятой, даты — текстом; `null` — нечего подытоживать."
+          }
+        }
+      },
+      "Groups": {
+        "type": "object",
+        "description": "Заголовки групп и итог по всем записям.",
+        "required": [
+          "total",
+          "groups",
+          "exact",
+          "truncated"
+        ],
+        "properties": {
+          "total": {
+            "$ref": "#/components/schemas/GroupHeader",
+            "description": "Все записи: уровень 0, без значений."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupHeader"
+            },
+            "description": "Заголовки групп всех уровней, каждый перед вложенными в него группами, в порядке групп; не больше 2000."
+          },
+          "exact": {
+            "type": "boolean",
+            "description": "`false` — запрос не уложился в своё время: `total.count` — оценка планировщика, итогов и групп нет."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "Групп больше, чем помещается в ответ: последние не включены."
+          }
+        }
+      },
+      "Import": {
+        "type": "object",
+        "description": "Импорт.",
+        "required": [
+          "id",
+          "mode",
+          "status",
+          "file_name",
+          "records_done",
+          "records_rejected",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`imp_…`."
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ImportMode",
+            "description": "Куда идут записи."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImportStatus",
+            "description": "На каком этапе."
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Имя файла."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`tbl_…` таблицы, если она уже есть."
+          },
+          "source": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ImportSource",
+                "description": "Файл в том виде, как он прочитан."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportColumn"
+            },
+            "description": "Его колонки."
+          },
+          "preview": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Его первые строки с данными."
+          },
+          "records_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Строк с данными."
+          },
+          "mapping": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ImportMapping",
+                "description": "Сопоставление: предложено разбором, изменено автором."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "records_done": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Записано записей."
+          },
+          "records_rejected": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Значения, которые не подошли: их ячейки остаются пустыми, отчёт их перечисляет."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Причина сбоя."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда запрошен, RFC 3339."
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RejectedValue"
+            },
+            "description": "Первые значения, которые не подошли: почему импорт остановился или что входит в его отчёт."
+          },
+          "report": {
+            "type": "boolean",
+            "description": "Отчёт обо всех значениях, которые не подошли: `GET /imports/{import}/report`."
+          },
+          "undo_until": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "До какого момента его записи можно удалить через `POST /imports/{import}/undo`, RFC 3339."
+          }
+        }
+      },
+      "ImportColumn": {
+        "type": "object",
+        "description": "Колонка файла.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Её заголовок."
+          },
+          "type": {
+            "type": "string",
+            "description": "Тип, угаданный по её первым 1000 значениям: `single_line_text`, `long_text`, `number`, `date`, `date_time`, `checkbox`, `single_select`."
+          },
+          "places": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Знаков после запятой у её чисел.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Её различные значения — для вариантов."
+          }
+        }
+      },
+      "ImportMapping": {
+        "type": "object",
+        "description": "Выбор автора (`PATCH /imports/{import}`); разбор предлагает свой.",
+        "properties": {
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Лист XLSX; другой лист перечитывает файл."
+          },
+          "header": {
+            "type": "boolean",
+            "description": "Первая строка — строка заголовков; изменение перечитывает файл."
+          },
+          "table_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Название новой таблицы."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnMapping"
+            },
+            "description": "Колонки в порядке полей новой таблицы."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportMode": {
+        "type": "string",
+        "description": "Куда идут записи.",
+        "enum": [
+          "new_table",
+          "append"
+        ]
+      },
+      "ImportSource": {
+        "type": "object",
+        "description": "Файл в том виде, как его прочитал разбор.",
+        "required": [
+          "format"
+        ],
+        "properties": {
+          "format": {
+            "type": "string",
+            "description": "`csv` или `xlsx`."
+          },
+          "encoding": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Кодировка CSV: `utf-8` или `windows-1251`."
+          },
+          "separator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Разделитель CSV."
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Листы XLSX."
+          }
+        }
+      },
+      "ImportStatus": {
+        "type": "string",
+        "description": "На каком этапе импорт.",
+        "enum": [
+          "analyzing",
+          "ready",
+          "running",
+          "paused",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "undoing",
+          "undone"
+        ]
+      },
+      "InvitationInput": {
+        "type": "object",
+        "description": "Приглашение: в организацию (администратор) или сразу в рабочее пространство или базу с ролью (тот, кто управляет их участниками).",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail человека."
+          },
+          "name": {
+            "type": "string",
+            "description": "Отображаемое имя."
+          },
+          "workspace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`wsp_…`, куда пригласить."
+          },
+          "base": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`bas_…`, куда пригласить."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`reader`, `commenter`, `editor`, `creator` или `owner`; обязательно вместе с рабочим пространством или базой."
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvitationOut": {
+        "type": "object",
+        "description": "Результат приглашения; сама ссылка уходит только по почте.",
+        "required": [
+          "user",
+          "delivery"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User",
+            "description": "Приглашённая учётная запись."
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/Delivery",
+            "description": "`mail`, `failed` (повторите) или `off` (ссылку выдаёт консоль)."
+          }
+        }
+      },
+      "LoginBody": {
+        "type": "object",
+        "description": "Вход по e-mail и паролю.",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail учётной записи."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Её пароль."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Me": {
+        "type": "object",
+        "description": "Учётная запись сессии в том виде, как её показывает интерфейс.",
+        "required": [
+          "display_name",
+          "email",
+          "is_org_admin"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Отображаемое имя."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail."
+          },
+          "is_org_admin": {
+            "type": "boolean",
+            "description": "Администратор организации."
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Язык интерфейса, выбранный человеком: `ru` или `en`; нет — язык браузера."
+          }
+        }
+      },
+      "MeChange": {
+        "type": "object",
+        "description": "Изменение настроек своей учётной записи (`PATCH /me`).",
+        "properties": {
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Язык интерфейса: `ru`, `en` или `null` — язык браузера."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NameBody": {
+        "type": "object",
+        "description": "Название нового или переименованного объекта.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "От 1 до 200 символов; пробелы по краям отбрасываются."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewExport": {
+        "type": "object",
+        "description": "Экспорт представления (`POST /views/{view}/exports`): его записи и видимые поля в его порядке; фильтр, сортировка и поиск вкладки вместо заданных в представлении — так, как их показывает сетка.",
+        "required": [
+          "format"
+        ],
+        "properties": {
+          "format": {
+            "$ref": "#/components/schemas/ExportFormat",
+            "description": "`csv` или `xlsx`."
+          },
+          "separator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Разделитель CSV: `;` (Excel на русском, числа с десятичной запятой) или `,`."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Фильтр вкладки, объединённый через «и» с фильтром представления."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Сортировка вкладки вместо сортировки представления."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поиск по представлению."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewImport": {
+        "type": "object",
+        "description": "Импорт загруженного файла (`POST /bases/{base}/imports` — в новую таблицу, `POST /tables/{table}/imports` — в существующую).",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "`fil_…` файла, который запрашивающий загрузил для импорта."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewRecord": {
+        "type": "object",
+        "description": "Новая запись: значения по id или названию поля.",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Значения по `fld_…` или названию."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewRecords": {
+        "type": "object",
+        "description": "Новые записи.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewRecord"
+            },
+            "description": "До 1000 записей."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` той же таблицы: записи встают прямо перед ней в ручном порядке, одна за другой. Без `before` и `after` — в конец."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` той же таблицы: записи встают прямо после неё; не вместе с `before`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "NewUpload": {
+        "type": "object",
+        "description": "Запрошенная загрузка (`POST /uploads`): байты передаются следом через `PUT /uploads/{upload}`.",
+        "required": [
+          "purpose",
+          "name",
+          "size"
+        ],
+        "properties": {
+          "purpose": {
+            "$ref": "#/components/schemas/UploadPurpose",
+            "description": "Для чего файл."
+          },
+          "name": {
+            "type": "string",
+            "description": "Его имя."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Его размер в байтах.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Operation": {
+        "type": "object",
+        "description": "Операция над структурой, выполняемая в фоне.",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`opr_…`."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Что она делает, например `create_base`."
+          },
+          "status": {
+            "type": "string",
+            "description": "`pending`, `running`, `succeeded` или `failed`."
+          },
+          "object": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Публичный id созданного объекта после успешного завершения."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Код ошибки неудавшейся операции, например `forbidden`."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда запрошена, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда завершилась, RFC 3339."
+          }
+        }
+      },
+      "OptionsInput": {
+        "type": "object",
+        "description": "Настройки поля: `precision` числа (0–8), `choices` поля «один из списка» — весь список по порядку; вариант, которого нет в списке, удаляется.",
+        "properties": {
+          "precision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Знаков после запятой у числа.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ChoiceInput"
+            },
+            "description": "Варианты поля «один из списка»."
+          }
+        },
+        "additionalProperties": false
+      },
+      "OptionsOut": {
+        "type": "object",
+        "description": "Настройки поля.",
+        "properties": {
+          "precision": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Знаков после запятой у числа.",
+            "minimum": 0
+          },
+          "choices": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ChoiceOut"
+            },
+            "description": "Варианты поля «один из списка»."
+          }
+        }
+      },
+      "OrInput": {
+        "type": "object",
+        "description": "`{\"or\": [...]}`.",
+        "required": [
+          "or"
+        ],
+        "properties": {
+          "or": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilterInput"
+            },
+            "description": "Узлы."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Page": {
+        "type": "object",
+        "description": "Страница записей.",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "Записи в порядке представления."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Передайте его как `cursor` для следующей страницы; на последней отсутствует."
+          }
+        }
+      },
+      "PermissionRow": {
+        "type": "object",
+        "description": "Строка: действие, проверяемое по роли, или право, которое определяется иначе.",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Описание."
+          },
+          "action": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Постоянное имя действия (`record.write`); у прав, которые определяются иначе, отсутствует."
+          },
+          "min_role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Наименьшая роль, которой это разрешено."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`workspace` или `base`: откуда берётся роль."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "Номера примечаний."
+          },
+          "by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "От чего зависит право — для прав, которые определяются иначе."
+          }
+        }
+      },
+      "PermissionSection": {
+        "type": "object",
+        "description": "Раздел матрицы.",
+        "required": [
+          "title",
+          "rows"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Заголовок."
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionRow"
+            },
+            "description": "Строки."
+          }
+        }
+      },
+      "Permissions": {
+        "type": "object",
+        "description": "Матрица «роль × действие» установленной версии.",
+        "required": [
+          "roles",
+          "sections",
+          "notes"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Роли от младшей к старшей; каждая включает права предыдущей."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSection"
+            },
+            "description": "Разделы матрицы в порядке документации."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Примечания; `notes` действий ссылаются на них по номеру с 1."
+          }
+        }
+      },
+      "PreconditionFailed": {
+        "type": "object",
+        "description": "Ответ `412 precondition-failed` на запись с `if`: ничего не применено.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "errors",
+          "current"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`urn:xtab:problem:precondition-failed`."
+          },
+          "title": {
+            "type": "string",
+            "description": "`Precondition Failed`."
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "`412`.",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionFailed"
+            },
+            "description": "Поля, значения которых отличаются, по записям."
+          },
+          "current": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "Записи из `errors` в текущем виде."
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Тело ответа с ошибкой: описание проблемы по RFC 9457 с типами проблем API.",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`urn:xtab:problem:<code>`."
+          },
+          "title": {
+            "type": "string",
+            "description": "Краткое описание статуса."
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Статус HTTP.",
+            "minimum": 0
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "description": "Ошибки отдельных полей."
+          }
+        }
+      },
+      "Record": {
+        "type": "object",
+        "description": "Запись.",
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "fields"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…`."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда создана, RFC 3339."
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Кто создал, `usr_…`."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Когда последний раз изменена."
+          },
+          "updated_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Кто последним изменил."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Значения полей; пустое — `null`."
+          },
+          "color": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Её цвет по цвету представления; если его нет — без цвета."
+          }
+        }
+      },
+      "RecordCount": {
+        "type": "object",
+        "description": "Число записей (`POST /tables/{table}/records/count`): фильтр, объединённый через «и» с фильтром представления; без представления — только фильтр.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` таблицы: его фильтр."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Фильтр, как в запросе записей."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поиск: записи, в показанном тексте, длинном тексте, варианте или главном поле которых он встречается, без учёта регистра и `ё`; до 200 символов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordGroups": {
+        "type": "object",
+        "description": "Группы записей и их итоги (`POST /tables/{table}/records/groups`): фильтр, объединённый через «и» с фильтром представления; группы и итоги, если переданы, — вместо заданных в представлении. Без групп — строка итогов по всему представлению.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` таблицы: его фильтр, группы и итоги."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Фильтр, как в запросе записей."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "groups": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Группы вместо групп представления, до трёх уровней."
+          },
+          "summaries": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SummaryInput"
+            },
+            "description": "Итоги вместо итогов представления."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поиск: записи, в показанном тексте, длинном тексте, варианте или главном поле которых он встречается, без учёта регистра и `ё`; до 200 символов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RecordQuery": {
+        "type": "object",
+        "description": "Запрос записей (`POST /tables/{table}/records/query`): `GET …/records` с фильтром в теле, объединённым через «и» с фильтром представления.",
+        "properties": {
+          "view": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`viw_…` таблицы: его фильтр и сортировка."
+          },
+          "fields": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "`fld_…` или названия возвращаемых полей; по умолчанию все."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Фильтр: до 100 условий и трёх уровней групп."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sort": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Сортировка вместо сортировки представления, до пяти ключей."
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Записей на странице, 1–500, по умолчанию 100."
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`next_cursor` предыдущей страницы."
+          },
+          "position": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Номер записи в порядке, с 0: страница начинается с неё вместо курсора."
+          },
+          "groups": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Группы вместо групп представления, до трёх уровней (временная группировка). Записи сгруппированного представления идут в порядке заголовков его групп, затем по сортировке."
+          },
+          "group": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object"
+            },
+            "description": "Записи одной группы: её значения, по одному на уровень групп, начиная с первого; `null` — группа пустых значений."
+          },
+          "color": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ColorInput",
+                "description": "Цвет вместо цвета представления (временный цвет)."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поиск: записи, в показанном тексте, длинном тексте, варианте или главном поле которых он встречается, без учёта регистра и `ё`; до 200 символов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Records": {
+        "type": "object",
+        "description": "Записано записей.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "description": "В порядке запроса."
+          }
+        }
+      },
+      "RejectedValue": {
+        "type": "object",
+        "description": "Значение файла, которое не подошло своему полю: его ячейка остаётся пустой.",
+        "required": [
+          "row",
+          "column",
+          "value",
+          "reason"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Строка файла, с 1, считая строку заголовков."
+          },
+          "column": {
+            "type": "string",
+            "description": "Заголовок колонки."
+          },
+          "value": {
+            "type": "string",
+            "description": "Значение, обрезанное до 200 символов."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Почему не подошло."
+          }
+        }
+      },
+      "ResetBody": {
+        "type": "object",
+        "description": "Задать новый пароль по ссылке для сброса.",
+        "required": [
+          "token",
+          "password"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Токен из фрагмента ссылки для сброса."
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Новый пароль."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResetRequestBody": {
+        "type": "object",
+        "description": "Запросить ссылку для сброса пароля.",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "E-mail учётной записи."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RowHeight": {
+        "type": "string",
+        "description": "Высота строк сетки.",
+        "enum": [
+          "short",
+          "medium",
+          "tall"
+        ]
+      },
+      "RunImport": {
+        "type": "object",
+        "description": "Запуск импорта (`POST /imports/{import}/run`).",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Записать, даже если больше десятой части проверенных значений не подходит."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SortInput": {
+        "type": "object",
+        "description": "Ключ сортировки в API.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` или название поля."
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction",
+            "description": "`asc` (по умолчанию) или `desc`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "StepUpBody": {
+        "type": "object",
+        "description": "Повторно подтвердить личность перед важным действием: пароль учётной записи сессии.",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Пароль учётной записи."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SummaryInput": {
+        "type": "object",
+        "description": "Итог по полю в API.",
+        "required": [
+          "field",
+          "function"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` или название поля."
+          },
+          "function": {
+            "type": "string",
+            "description": "`empty`, `filled`, `unique`, `percent_empty`, `percent_filled`; для чисел ещё `sum`, `average`, `min`, `max`; для дат — `earliest`, `latest`, `range`; для флажка — только `checked` и `unchecked`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Table": {
+        "type": "object",
+        "description": "Таблица с её полями и общими представлениями.",
+        "required": [
+          "id",
+          "base",
+          "name",
+          "description",
+          "fields",
+          "views"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tbl_…`."
+          },
+          "base": {
+            "type": "string",
+            "description": "Её база, `bas_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание."
+          },
+          "primary_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Её главное поле, `fld_…`."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Field"
+            },
+            "description": "Поля по порядку."
+          },
+          "views": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/View"
+            },
+            "description": "Общие представления по порядку."
+          },
+          "manage_views": {
+            "type": "boolean",
+            "description": "Может ли запрашивающий менять её общие представления (создатель базы); остальные фильтруют и сортируют только для себя."
+          }
+        }
+      },
+      "TableInput": {
+        "type": "object",
+        "description": "Новая таблица; без `fields` в ней будет главное поле «Название».",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название, уникальное в базе без учёта регистра."
+          },
+          "description": {
+            "type": "string",
+            "description": "Описание."
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldInput"
+            },
+            "description": "Её поля; первое — главное."
+          }
+        },
+        "additionalProperties": false
+      },
+      "TablePatch": {
+        "type": "object",
+        "description": "Изменения таблицы; чего нет, то остаётся.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое название."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое описание."
+          }
+        },
+        "additionalProperties": false
+      },
+      "UndoImport": {
+        "type": "object",
+        "description": "Отмена импорта (`POST /imports/{import}/undo`).",
+        "properties": {
+          "keep_changed": {
+            "type": "boolean",
+            "description": "Оставить записи, изменённые после импорта; по умолчанию `true`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Upload": {
+        "type": "object",
+        "description": "Загрузка в процессе.",
+        "required": [
+          "upload",
+          "file",
+          "max_size"
+        ],
+        "properties": {
+          "upload": {
+            "type": "string",
+            "description": "`upl_…`: куда идут байты."
+          },
+          "file": {
+            "type": "string",
+            "description": "`fil_…`: файл, который из них получится."
+          },
+          "max_size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Наибольший принимаемый размер в байтах.",
+            "minimum": 0
+          }
+        }
+      },
+      "UploadPurpose": {
+        "type": "string",
+        "description": "Для чего загружается файл.",
+        "enum": [
+          "import"
+        ]
+      },
+      "UploadedFile": {
+        "type": "object",
+        "description": "Загруженный файл.",
+        "required": [
+          "id",
+          "name",
+          "size",
+          "content_type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`fil_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Его имя."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Его размер в байтах.",
+            "minimum": 0
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Его тип по первым байтам: `text/csv` или тип XLSX."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "description": "Участник организации.",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "status",
+          "is_org_admin"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Отображаемое имя."
+          },
+          "email": {
+            "type": "string",
+            "description": "E-mail."
+          },
+          "status": {
+            "type": "string",
+            "description": "`invited`, `active`, `blocked` или `deactivated`."
+          },
+          "is_org_admin": {
+            "type": "boolean",
+            "description": "Администратор организации."
+          }
+        }
+      },
+      "UsersPage": {
+        "type": "object",
+        "description": "Страница участников.",
+        "required": [
+          "users"
+        ],
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            },
+            "description": "Участники по номеру."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Передайте его как `after` для следующей страницы; на последней отсутствует."
+          }
+        }
+      },
+      "View": {
+        "type": "object",
+        "description": "Общее представление.",
+        "required": [
+          "id",
+          "table",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`viw_…`."
+          },
+          "table": {
+            "type": "string",
+            "description": "Его таблица, `tbl_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "type": {
+            "type": "string",
+            "description": "`grid`."
+          },
+          "config": {
+            "$ref": "#/components/schemas/ViewConfig",
+            "description": "Его настройки."
+          }
+        }
+      },
+      "ViewColumn": {
+        "type": "object",
+        "description": "Колонка представления: её поле, ширина и скрыта ли она.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Ширина в CSS-пикселях, 60…600; без неё — 180.",
+            "minimum": 0
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Скрыта в этом представлении; главное поле не скрывается никогда."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewConfig": {
+        "type": "object",
+        "description": "Настройки представления «Сетка»: порядок, ширина и видимость его колонок, высота строк, фильтр, сортировка, группы, итоги полей и цвет записей.",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ViewColumn"
+            },
+            "description": "Колонки по порядку; поля, которых нет в списке, идут следом в порядке таблицы."
+          },
+          "row_height": {
+            "$ref": "#/components/schemas/RowHeight",
+            "description": "Высота строк."
+          },
+          "filter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Какие записи показывает представление."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Порядок записей, до пяти ключей; без них — ручной порядок."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Группы записей, до трёх уровней; внутри группы действует сортировка."
+          },
+          "summaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SummaryInput"
+            },
+            "description": "Итоги полей под их колонками и в заголовках групп."
+          },
+          "color": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ColorInput",
+                "description": "Цвет записей."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewInput": {
+        "type": "object",
+        "description": "Новое представление.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "type": {
+            "type": "string",
+            "description": "`grid` — единственный тип в v0.2."
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Представление той же таблицы (`viw_…`), настройки которого копирует новое: «дублировать»."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ViewPatch": {
+        "type": "object",
+        "description": "Изменение представления: название, настройки или и то и другое.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое название."
+          },
+          "config": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ViewConfig",
+                "description": "Новые настройки целиком: они заменяют прежние."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Workspace": {
+        "type": "object",
+        "description": "Рабочее пространство с базами, которые пользователь может открыть.",
+        "required": [
+          "id",
+          "name",
+          "bases"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`wsp_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "bases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaseRef"
+            },
+            "description": "Видимые пользователю базы, по названию."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-xtab_session",
+        "description": "Сессия браузера; изменяющие запросы также передают `X-Xtab-Request: 1`"
+      }
+    }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Вход и сессия"
+    },
+    {
+      "name": "me",
+      "description": "Учётная запись сессии"
+    },
+    {
+      "name": "meta",
+      "description": "Служебные сведения"
+    },
+    {
+      "name": "records",
+      "description": "Записи таблиц"
+    },
+    {
+      "name": "imports",
+      "description": "Загрузка файлов и импорт CSV и XLSX"
+    },
+    {
+      "name": "members",
+      "description": "Участники организации и их роли"
+    },
+    {
+      "name": "structure",
+      "description": "Рабочие пространства, базы, таблицы, поля, представления и операции над структурой"
+    }
+  ]
+}
