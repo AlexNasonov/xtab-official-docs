@@ -1,7 +1,7 @@
 ---
 title: "Permissions"
 description: "What each role can do in a workspace and in a base. Columns: R — read only, Cm — commenter, E — editor, Cr — creator, O — owner; each next role includes the rights of the previous one."
-version: "v0.2.0"
+version: "v0.3.0"
 lang: "en"
 ---
 

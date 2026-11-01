@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "servers": [
     {
@@ -1053,7 +1053,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Rename or describe a table (creator of the base).",
+        "summary": "Rename or describe a table, or choose the field that names its records (creator of the\nbase).",
         "operationId": "update_table",
         "parameters": [
           {
@@ -1108,7 +1108,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: name taken or invalid, description too long",
+            "description": "validation-failed: name taken or invalid, description too long, a primary field of another table or of a type that names no record",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1250,7 +1250,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Rename, describe or change the settings of a field (creator of the base). Choices of a\nsingle select are the whole list: known ones by `id`, new ones without it.",
+        "summary": "Rename, describe or change the settings of a field (creator of the base). Choices of a\nsingle or multiple select are the whole list: known ones by `id`, new ones without it.",
         "operationId": "update_field",
         "parameters": [
           {
@@ -1280,6 +1280,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Field"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted: a new formula is checked and counted in the background; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
                 }
               }
             }
@@ -1656,6 +1666,30 @@
                 "null"
               ],
               "format": "int64"
+            }
+          },
+          {
+            "name": "q",
+            "in": "path",
+            "description": "A part of the name or of the e-mail, regardless of case; at most 200 characters.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "active",
+            "in": "path",
+            "description": "`true` — only active members: those a field of users may take.",
+            "required": true,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           }
         ],
@@ -2694,6 +2728,78 @@
         }
       }
     },
+    "/tables/{table}/formula-preview": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "A formula computed on one record before it is saved (reader of the base): the editor of a\nformula shows the value of one with a function only the server computes.",
+        "operationId": "formula_preview",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormulaPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The value of the formula on the record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulaValue"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the table or the record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the formula, with what is wrong and where",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/views/{view}/count": {
       "get": {
         "tags": [
@@ -3057,7 +3163,7 @@
         "tags": [
           "imports"
         ],
-        "summary": "Start an upload of a file for an import, up to 50 MB; the bytes follow by\n`PUT /uploads/{upload}`.",
+        "summary": "Start an upload of a file: for an import, up to 50 MB; for a field of attachments, up to\nthe limit of the installation (100 MB by default), with the right to edit the records of\nits table. The bytes follow by `PUT /uploads/{upload}`.",
         "operationId": "create_upload",
         "requestBody": {
           "content": {
@@ -3080,8 +3186,28 @@
               }
             }
           },
+          "403": {
+            "description": "forbidden: no right to edit the records of the table",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such field or record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
-            "description": "validation-failed: the name or the size",
+            "description": "validation-failed: the name, the size or the field",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3118,7 +3244,7 @@
         "tags": [
           "imports"
         ],
-        "summary": "The bytes of an upload (`application/octet-stream`). The type is found by the first\nbytes: CSV or XLSX; anything else is refused and not kept.",
+        "summary": "The bytes of an upload (`application/octet-stream`). The type is found by the first\nbytes: for an import CSV or XLSX, anything else is refused and not kept; for an\nattachment any type, kept with the SHA-256 of the bytes. An attachment that sends nothing\nfor 30 seconds or less than 10 KB a second after a minute is dropped.",
         "operationId": "put_upload",
         "parameters": [
           {
@@ -3167,8 +3293,197 @@
               }
             }
           },
+          "408": {
+            "description": "request-timeout: the bytes stopped or came too slowly",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "validation-failed: unsupported-file or too-large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "too-many-uploads: the node takes no more uploads now; dependency-unavailable: no storage of files",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{file}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "A file of attachments: raster images, video and audio are shown by the browser, anything\nelse is downloaded; a script in a file never runs. One range of bytes may be asked for\n(`Range: bytes=…`); `If-None-Match` with the tag of the bytes answers `304`.",
+        "operationId": "get_file",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "description": "`fil_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "206": {
+            "description": "The range of bytes asked for",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "304": {
+            "description": "The file is the one the browser has"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such file, or its field is gone",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "range-not-satisfiable: the range is beyond the file",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-downloads: eight are on their way, or the node is busy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: the storage of files does not answer",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{file}/thumbs/{size}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "A thumbnail of an image of attachments: 64, 256 or 1024 px on its longer side, a JPEG or,\nfor an image with transparency, a PNG. Made in the background after the upload: until\nthen, and for files that are no images, `404`; 1024 px only of an image larger than that.",
+        "operationId": "get_thumbnail",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "description": "`fil_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "64, 256 or 1024",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thumbnail",
+            "content": {
+              "image/jpeg": {}
+            }
+          },
+          "304": {
+            "description": "The file is the one the browser has"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such file or size, or the thumbnail is not made",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-downloads: eight are on their way, or the node is busy",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: the storage of files does not answer",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3878,7 +4193,7 @@
       },
       "ChoiceInput": {
         "type": "object",
-        "description": "A choice of a single select. Without `id` it is a new one.",
+        "description": "A choice of a single or multiple select. Without `id` it is a new one.",
         "required": [
           "name"
         ],
@@ -3903,7 +4218,7 @@
       },
       "ChoiceOut": {
         "type": "object",
-        "description": "A choice of a single select.",
+        "description": "A choice of a single or multiple select.",
         "required": [
           "id",
           "name",
@@ -4064,7 +4379,7 @@
           },
           "op": {
             "type": "string",
-            "description": "The operator: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`…"
+            "description": "The operator: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`,\n`has_any_of`…"
           },
           "value": {
             "type": [
@@ -4307,7 +4622,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`single_line_text`, `long_text`, `number`, `checkbox`, `single_select`, `date`,\n`date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`,\n`last_modified_by`."
+            "description": "`single_line_text`, `long_text`, `email`, `url`, `phone_number`, `number`, `currency`,\n`percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`,\n`user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`,\n`autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`,\n`formula`, `lookup`, `count`, `rollup`."
           },
           "description": {
             "type": "string",
@@ -4382,6 +4697,50 @@
           }
         ],
         "description": "A node of a filter as the API carries it."
+      },
+      "FormulaPreview": {
+        "type": "object",
+        "description": "A formula computed on one record before it is saved: the editor of a formula shows the\nvalue of one with a function only the server computes.",
+        "required": [
+          "formula",
+          "record"
+        ],
+        "properties": {
+          "formula": {
+            "type": "string",
+            "description": "The text of the formula, its fields by name in braces."
+          },
+          "record": {
+            "type": "string",
+            "description": "The record, `rec_…`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormulaResult": {
+        "type": "string",
+        "description": "The type of the result of a formula: of its column and of its values. The server sets it\nfrom the check of the formula; it is never the user's.",
+        "enum": [
+          "number",
+          "text",
+          "flag",
+          "date",
+          "date_time",
+          "texts"
+        ]
+      },
+      "FormulaValue": {
+        "type": "object",
+        "description": "The value of a formula on a record, as a record carries the value of a formula field: a\nnumber, a date, a moment, a flag, texts, or `{\"error\": \"DIV_ZERO\"}`.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "object",
+            "description": "The value; `null` — empty."
+          }
+        }
       },
       "FoundRecord": {
         "type": "object",
@@ -4507,7 +4866,7 @@
             "items": {
               "type": "object"
             },
-            "description": "The values of the group and of the groups it is in, from the first level, in the\nforms of the values of records; `null` — empty. A date and time is grouped by its\nday in the time zone of the organization, a text by its first 128 characters."
+            "description": "The values of the group and of the groups it is in, from the first level, in the\nforms of the values of records; `null` — empty. A date and time is grouped by its\nday in the time zone of the organization, a text by its first 128 characters, a link\nby the names of its linked records, `[{\"name\": …}]`."
           },
           "count": {
             "type": "integer",
@@ -4899,6 +5258,20 @@
               "null"
             ],
             "description": "The language of the interface the person chose: `ru` or `en`; none — the one of the\nbrowser."
+          },
+          "org_locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The language of the organization (`ru-RU`): the words its formulas write in dates."
+          },
+          "org_timezone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The time zone of the organization (`Europe/Moscow`): the dates of its formulas count\nin it."
           }
         }
       },
@@ -5060,6 +5433,20 @@
             "format": "int64",
             "description": "Its size in bytes.",
             "minimum": 0
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`fld_…` of the field of attachments the file is for: required for an attachment."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the record whose cell the file is for, when the record exists already."
           }
         },
         "additionalProperties": false
@@ -5115,7 +5502,7 @@
       },
       "OptionsInput": {
         "type": "object",
-        "description": "Settings of a field: `precision` of a number (0–8), `choices` of a single select — the\nwhole list in its order; a choice left out is removed.",
+        "description": "Settings of a field: `precision` of a number, an amount or a percent (0–8), `currency`\nof an amount, `duration_format` of a duration, `max` of a rating, `choices` of a single\nor multiple select — the whole list in its order; a choice left out is removed.",
         "properties": {
           "precision": {
             "type": [
@@ -5123,7 +5510,30 @@
               "null"
             ],
             "format": "int32",
-            "description": "Decimal places of a number.",
+            "description": "Decimal places of a number, an amount or a percent.",
+            "minimum": 0
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code of the currency of an amount: `RUB` (default), `USD`, `EUR`, `CNY`,\n`KZT`, `BYN`, `UZS`, `AMD`, `KGS`, `AZN`, `GEL`, `TRY`, `AED`, `INR`, `GBP`, `JPY`."
+          },
+          "duration_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How a duration is shown: `h:mm` (default), `h:mm:ss`, `h:mm:ss.s`, `h:mm:ss.ss`,\n`h:mm:ss.sss`."
+          },
+          "max": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Stars of a rating, 1–10 (default 5).",
             "minimum": 0
           },
           "choices": {
@@ -5134,7 +5544,49 @@
             "items": {
               "$ref": "#/components/schemas/ChoiceInput"
             },
-            "description": "Choices of a single select."
+            "description": "Choices of a single or multiple select."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The table of the same base a link links to (`tbl_…`); given when the field is\nadded, not changed after."
+          },
+          "single": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "A link to one record at most (many by default)."
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The text of the formula of a formula field, e.g. `{Price} * {Quantity}`; checked\nagainst the fields of the table. Of a rollup — its expression over `values`, the\nvalues of the linked records: `SUM(values)`."
+          },
+          "link_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The link field of the same table a lookup, a count or a rollup reads through\n(`fld_…`); given when the field is added, not changed after."
+          },
+          "lookup_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The field of the linked table a lookup shows or a rollup sums up (`fld_…`): a rollup\ntakes numbers and texts; given when the field is added, not changed after."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The linked records a rollup sums up: a filter over the fields of the linked table, as\nthe filter of a view; none — all of them. Given when the field is added."
           }
         },
         "additionalProperties": false
@@ -5149,7 +5601,30 @@
               "null"
             ],
             "format": "int32",
-            "description": "Decimal places of a number.",
+            "description": "Decimal places of a number, an amount or a percent.",
+            "minimum": 0
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "ISO 4217 code of the currency of an amount."
+          },
+          "duration_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How a duration is shown."
+          },
+          "max": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Stars of a rating.",
             "minimum": 0
           },
           "choices": {
@@ -5160,7 +5635,67 @@
             "items": {
               "$ref": "#/components/schemas/ChoiceOut"
             },
-            "description": "Choices of a single select."
+            "description": "Choices of a single or multiple select."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The table a link links to (`tbl_…`)."
+          },
+          "inverse_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The inverse field of a link in the linked table (`fld_…`); none for a link of a table\nwith itself."
+          },
+          "single": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "A link to one record at most."
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The text of the formula of a formula field, its references by the current names of\ntheir fields: a formula reads a field whatever its name."
+          },
+          "result": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FormulaResult",
+                "description": "The type of the values of a formula field or a rollup: `number`, `text`, `flag`,\n`date`, `date_time` or `texts` (a list of texts); of a lookup — of each of its values."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "link_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The link field a lookup, a count or a rollup reads through (`fld_…`)."
+          },
+          "lookup_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The field of the linked table a lookup shows or a rollup sums up (`fld_…`)."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The linked records a rollup sums up, as the filter of a view; none — all of them."
           }
         }
       },
@@ -5426,6 +5961,17 @@
               "null"
             ],
             "description": "Its colour by the colour of the view; absent — none."
+          },
+          "more": {
+            "type": "object",
+            "description": "Links beyond those a cell of a link field carries, by the key of the field: how many\nmore there are; absent — the cells carry them all.",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5867,6 +6413,13 @@
               "null"
             ],
             "description": "New description."
+          },
+          "primary_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The field that names the records from now on, `fld_…`: a field of the table of a type\nthat may name them — a text, a number, a date, a choice, an autonumber, a formula."
           }
         },
         "additionalProperties": false
@@ -5911,7 +6464,8 @@
         "type": "string",
         "description": "What a file is uploaded for.",
         "enum": [
-          "import"
+          "import",
+          "attachment"
         ]
       },
       "UploadedFile": {
@@ -5940,7 +6494,25 @@
           },
           "content_type": {
             "type": "string",
-            "description": "Its type by its first bytes: `text/csv` or the type of XLSX."
+            "description": "Its type by its first bytes: for an import `text/csv` or the type of XLSX."
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pixels across of an image, as it is shown.",
+            "minimum": 0
+          },
+          "height": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pixels down of an image, as it is shown.",
+            "minimum": 0
           }
         }
       },

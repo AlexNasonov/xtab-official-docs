@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-28",
+  "date": "2026-11-01",
   "files": [
     {
       "bytes": 120,
@@ -17,119 +17,149 @@
       "sha256": "ca5e8e380518524c1818f3d4043d6d3c9fd4d7120afef9d3e14eaa8bcf780d9f"
     },
     {
-      "bytes": 174851,
+      "bytes": 194225,
       "path": "docs/en/api/openapi.json",
-      "sha256": "6c18c797e8d523595b7c616f238a0ed6e9300b02902df4113576e8472b46e305"
+      "sha256": "adacbe588d127951f314e20dad2388f21511e884025bd7a9fd479d384dd07a32"
     },
     {
       "bytes": 2389,
       "path": "docs/en/permissions.md",
-      "sha256": "ad7f26bbb895b217c16a9f8961586c4dc5dce24fa18987b2c61664a20225296c"
+      "sha256": "6293029859cd9da29eb8dec1aacbf08dd11d151cab4a50b06d6d580588b0266c"
     },
     {
-      "bytes": 811,
+      "bytes": 974,
       "path": "docs/en/user-guide/01-signing-in.md",
-      "sha256": "977f80e8f8f9e4021055984f7d6a8a1fc705d0541b17dc53415f8a1f4f78f1c7"
+      "sha256": "929a6583f61963cfdeb79c90564e8f85cc3cd23b8055babe0c51f70e74709866"
     },
     {
       "bytes": 832,
       "path": "docs/en/user-guide/02-home-workspaces-and-bases.md",
-      "sha256": "53237f186cb1c7d0bef587a65df788bfea4a561c9f55340051b7ffa692123e00"
+      "sha256": "c5769948e6ebf241894646caf4daf22a055e32a2ef037b9aab2fc4730fca9aed"
     },
     {
       "bytes": 643,
       "path": "docs/en/user-guide/03-base-and-tables.md",
-      "sha256": "8287cdbaf0117e58205c2019839fb9c4f8c7d805c41d373b3d484ad8a739b207"
+      "sha256": "ebc411915ab9f66a2b58a5ea91464d88a97c0d3eb56f0a1515d0842474db56d8"
     },
     {
       "bytes": 1198,
       "path": "docs/en/user-guide/04-records-in-a-table.md",
-      "sha256": "582d84004972a931f7cdcda3725bb3504b72476e866bd837e5d1b0fea53352b7"
+      "sha256": "01c82bdb6f5b61c0c6e9e23eca7a1abb32a95e9d01617d2273cf3db0e3c8a85a"
     },
     {
-      "bytes": 1146,
+      "bytes": 1548,
       "path": "docs/en/user-guide/05-fields.md",
-      "sha256": "25c96b9f3a85fd0f7efd561dc4dda182dd73b775c3aba1e4adbe767e1b4b7fcb"
+      "sha256": "b8cd21e5dfa42dff5bf5d596ee1fd118cc9b8ccf406abc3f5a419de55414468f"
     },
     {
-      "bytes": 597,
-      "path": "docs/en/user-guide/06-an-expanded-record.md",
-      "sha256": "1b82c75ad2ed952cc266cffbff3101724e75305971059bebc4545a8a6983f000"
+      "bytes": 774,
+      "path": "docs/en/user-guide/06-values-of-different-field-types.md",
+      "sha256": "ef79127cbd2451376f710c6219d3280ed0a5c51e320ffed9d9474f0cae6f93f1"
     },
     {
-      "bytes": 1326,
-      "path": "docs/en/user-guide/07-views.md",
-      "sha256": "487cda148675c31441f96f0fa6bab7e0c3de6fa2fc3809c2937c3f4f0c184e07"
+      "bytes": 960,
+      "path": "docs/en/user-guide/07-links-between-tables.md",
+      "sha256": "0e0125da875d58a06c8396993a16db41e8b1887d94d1f5bca50531871af06d9b"
     },
     {
-      "bytes": 731,
-      "path": "docs/en/user-guide/08-filter.md",
-      "sha256": "deb5472b063e3036c95a5b77507301e37a37538b625a911231065d911befb3a3"
+      "bytes": 1271,
+      "path": "docs/en/user-guide/08-lookup-count-and-rollup.md",
+      "sha256": "62d88d9de0c6bafbdc1384914f3967c007db5b664576575f04b8ec6ffbcd2dc1"
     },
     {
-      "bytes": 944,
-      "path": "docs/en/user-guide/09-sort.md",
-      "sha256": "3d69d0998854af8f3a10dc195ecd667ffa1c141fa5e642a1d98154aa401af8fa"
+      "bytes": 1819,
+      "path": "docs/en/user-guide/09-formulas.md",
+      "sha256": "1ab65765100963460bea1c9183334c239e8fd87ac18f2cb5d57aefb86fe7b193"
+    },
+    {
+      "bytes": 1099,
+      "path": "docs/en/user-guide/10-attachments.md",
+      "sha256": "7ced9d89f4cba8162fa39921794062905f640e6a8ceb400d1ac6b1a21a253637"
+    },
+    {
+      "bytes": 598,
+      "path": "docs/en/user-guide/11-an-expanded-record.md",
+      "sha256": "41a985b2723f4240abc032e6a25c9b1e11a76caebbe052e6c1d772524869cbaf"
+    },
+    {
+      "bytes": 1327,
+      "path": "docs/en/user-guide/12-views.md",
+      "sha256": "8ddc56acabfabd13975f49bedb6411b93469de86462e942bc7b8c0672a991e47"
+    },
+    {
+      "bytes": 732,
+      "path": "docs/en/user-guide/13-filter.md",
+      "sha256": "e22bd501c6e14cbef80f36d72315347e678b0bb9d231f14ac002d2e11e65fd15"
+    },
+    {
+      "bytes": 945,
+      "path": "docs/en/user-guide/14-sort.md",
+      "sha256": "ad9836694425231de7bb78b6cf921569ce4d2d1cb25107a2d7b956c4611c2ef3"
     },
     {
       "bytes": 734,
-      "path": "docs/en/user-guide/10-grouping.md",
-      "sha256": "a444202f05a86d1545bb5ee81acc09446c2fdfdd75ebc7dc37219c7e06aeb15f"
+      "path": "docs/en/user-guide/15-grouping.md",
+      "sha256": "d9018b86fc75eb670d44ca20e60d4fa2828aa55c8810f62df31ae4f28158d122"
     },
     {
       "bytes": 512,
-      "path": "docs/en/user-guide/11-record-colours.md",
-      "sha256": "718f38eb5ff880f9c1961af00648de2031d5613b47ebec1e824df9ac1ca6192b"
+      "path": "docs/en/user-guide/16-record-colours.md",
+      "sha256": "093a50681b66ea75e8739e74199a5fff0a27c1e9004d09e3261463d9e20c96a2"
     },
     {
       "bytes": 543,
-      "path": "docs/en/user-guide/12-summaries-under-columns.md",
-      "sha256": "fe8982048bb93b7a5491969a555badc0588f5da0ea19c7ca007f5a6d52c26fe5"
+      "path": "docs/en/user-guide/17-summaries-under-columns.md",
+      "sha256": "37e4e3b9ac3a04993a721f82cec4e9dc71435406c10f98dd1e7a053af1f841d9"
     },
     {
       "bytes": 466,
-      "path": "docs/en/user-guide/13-searching-a-view.md",
-      "sha256": "e9ed1780fe727a0e8f5810af578b1a768978e960bbfc9725efad1483a7532712"
+      "path": "docs/en/user-guide/18-searching-a-view.md",
+      "sha256": "0da3d173675a202e61498ba5e5a03d098b019b5b5c1f953422f322d277d9506c"
     },
     {
       "bytes": 801,
-      "path": "docs/en/user-guide/14-selecting-copying-and-pasting.md",
-      "sha256": "1722d1b5cb19b1b30c2f4ddbccbff1c287ccf81dc97b876220ccc1caf742f9e8"
+      "path": "docs/en/user-guide/19-selecting-copying-and-pasting.md",
+      "sha256": "c580a38f6076fb8721b34bb576352fda5767004ae70d54001b95c60b7818e23b"
     },
     {
       "bytes": 465,
-      "path": "docs/en/user-guide/15-undo.md",
-      "sha256": "12eb6669328c1458495914c23bd72c3e469fca399c727eee17a68512ac137793"
+      "path": "docs/en/user-guide/20-undo.md",
+      "sha256": "3df8299139614c30ad200b5b59edee6dd6ea0efce05d0d5be6618a7bb74eb3c7"
     },
     {
       "bytes": 1143,
-      "path": "docs/en/user-guide/16-import-from-csv-and-excel.md",
-      "sha256": "2d2c4bc304915b31230d92190fbd91fb06ceca14378279989305e2bc5586b60b"
+      "path": "docs/en/user-guide/21-import-from-csv-and-excel.md",
+      "sha256": "cddd030f63e3b366e6d56344a3db4a58884f4de79bf8338447bb90eb6b91dfd8"
     },
     {
       "bytes": 623,
-      "path": "docs/en/user-guide/17-export-to-csv-and-excel.md",
-      "sha256": "bea371463ccb90afac871cde0011b9d7a2f4900e1d5398e570f69564fd360fd4"
+      "path": "docs/en/user-guide/22-export-to-csv-and-excel.md",
+      "sha256": "77490da08d2c45494c41d74b317cdfb8b05fb3ee9a99ee19efec29c5d9deca3d"
     },
     {
       "bytes": 620,
-      "path": "docs/en/user-guide/18-quick-jump.md",
-      "sha256": "0aab6b7cb021825d140b6baa0ec39332782b785d7d7cd1fb48be5a04495722d8"
+      "path": "docs/en/user-guide/23-quick-jump.md",
+      "sha256": "4fe82fc961998ed889c9326d90089990ac77b27b8f628a93ad3615afe970316a"
     },
     {
       "bytes": 371,
-      "path": "docs/en/user-guide/19-working-together.md",
-      "sha256": "673cbb037795e64c8476c74033e951bf66b1c5f7bf8822bd972bd88e28582378"
+      "path": "docs/en/user-guide/24-working-together.md",
+      "sha256": "25d593541415f3ff2428ae6fc1885313eaa45ac6fd8f0c1deffabbe7141abdb7"
     },
     {
       "bytes": 414,
-      "path": "docs/en/user-guide/20-theme.md",
-      "sha256": "ae0d2d8a14a4b72ab7b85c7d8fe58855a6ea4588b63e41e7025d52902fd48ccc"
+      "path": "docs/en/user-guide/25-theme.md",
+      "sha256": "f07145d2e81810bc3bed4728228a7d4e48ed28c234f068a9bdad84be28549f5f"
     },
     {
       "bytes": 576,
-      "path": "docs/en/user-guide/21-interface-language.md",
-      "sha256": "2d878661b8e4f2c898f0898b22935b932bf4b82af967f8bff24118ef7098bb69"
+      "path": "docs/en/user-guide/26-interface-language.md",
+      "sha256": "f1d0fc1317178f2142e0dc3787f893ab6e09588cff2ca304c2083392a16e91eb"
+    },
+    {
+      "bytes": 52150,
+      "path": "docs/en/user-guide/img/attachments.png",
+      "sha256": "2c2b22c9711d236b04c11bf6b3ca746a25694be6ff9566f4d70b4bf55bd69d2e"
     },
     {
       "bytes": 66531,
@@ -137,19 +167,54 @@
       "sha256": "2527294999978c3a1cc61623074f5289d58897c7acf64bd5e5a5a8731655f255"
     },
     {
+      "bytes": 46461,
+      "path": "docs/en/user-guide/img/count.png",
+      "sha256": "5ac63b0857d3ed7af514fc0bf51d0b5ddef11bc182d3385222dc3d17a6139767"
+    },
+    {
       "bytes": 55153,
       "path": "docs/en/user-guide/img/export.png",
       "sha256": "224e829d07f7e2edf23b309e1ab7eb4651376bf48b74c52915b3b3dc14b55d70"
     },
     {
-      "bytes": 52665,
+      "bytes": 55589,
       "path": "docs/en/user-guide/img/field-menu.png",
-      "sha256": "74b517992baac88e3e67792d60dd90e40576e812adbc384145778a607e921938"
+      "sha256": "b810530ad9a8937b6942a64a08da34b2f92d403000a50d986de26bf5e2247d06"
+    },
+    {
+      "bytes": 49261,
+      "path": "docs/en/user-guide/img/field-types.png",
+      "sha256": "9d89149c7ed30f0508853499128c022be9d983594f97f1f3b28956f878fd8715"
     },
     {
       "bytes": 54404,
       "path": "docs/en/user-guide/img/filter.png",
       "sha256": "21b190b0cd3f806dfa243ca24e836606f2b168efa4bbc8f69f906586e9deb638"
+    },
+    {
+      "bytes": 70365,
+      "path": "docs/en/user-guide/img/formula-hint.png",
+      "sha256": "e3440415a7aa08a997c0e76899f490a860d4e18177227c4f372c84b7de0de521"
+    },
+    {
+      "bytes": 79797,
+      "path": "docs/en/user-guide/img/formula-mistake.png",
+      "sha256": "31768cff0d41f14779ab7cd49ec64c45edf3a4f216c4a67498f7666c48c5631b"
+    },
+    {
+      "bytes": 79283,
+      "path": "docs/en/user-guide/img/formula-offers.png",
+      "sha256": "4f7a79aae514eee52e3960f9f4eacfec8537ef33f89344abea289a3490bdfc98"
+    },
+    {
+      "bytes": 47095,
+      "path": "docs/en/user-guide/img/formula-primary.png",
+      "sha256": "7e39fba8effa9004dbcd8d03b0cc66c179e0f41d72f1974f2a5b230a9c9c4b70"
+    },
+    {
+      "bytes": 46898,
+      "path": "docs/en/user-guide/img/formula.png",
+      "sha256": "181e16abdc70c9a6193d084115c7d8638aa4d87cd20fd61fbb34e0736c075467"
     },
     {
       "bytes": 44680,
@@ -167,9 +232,9 @@
       "sha256": "fdc148397ce6be4ed3daa7118f5f08f543c50f3f6c583446e5ed93047b989fa8"
     },
     {
-      "bytes": 28786,
+      "bytes": 28796,
       "path": "docs/en/user-guide/img/home.png",
-      "sha256": "49c9726ef0f319a13724b4f43288831b671fbd3eace29fa6e4b5b861360d81e4"
+      "sha256": "a6ac44f3ac432808667c400111efbdf36f7db04fdd10b243e1994f833a0ca3fa"
     },
     {
       "bytes": 66670,
@@ -177,19 +242,39 @@
       "sha256": "534f2bfad94608298170f36ea8d21a6dbbe95edc136af33ec08db958aee3663b"
     },
     {
-      "bytes": 51230,
+      "bytes": 51452,
       "path": "docs/en/user-guide/img/language-ru.png",
-      "sha256": "ec7f4a04500a18feb764547598a4623de088212812a692707e4899ebd1c8abf3"
+      "sha256": "af1b72e02f2f17ed8263f47f7d4fc003a83771fbc16f05396d8a6eb31a4fc051"
     },
     {
-      "bytes": 16282,
+      "bytes": 50132,
+      "path": "docs/en/user-guide/img/link.png",
+      "sha256": "5acc8319ae854d48dcd5059fe6658dbfc3a7e34c28fc2612def8342664e7296f"
+    },
+    {
+      "bytes": 16835,
       "path": "docs/en/user-guide/img/login.png",
-      "sha256": "9e04caf766f0824f609d9e754fdcee04a959a583521a1606cf723e8733453ad7"
+      "sha256": "5250f45b005df65a0449ab2e99dcbe3dd86f7b90a07ea3d3f8cd005d08c80204"
     },
     {
-      "bytes": 58868,
+      "bytes": 46771,
+      "path": "docs/en/user-guide/img/lookup.png",
+      "sha256": "363a924f1ba4dbe0738fcccf49e6dab04ad35bdaa4392a1b435798ba08b24f7a"
+    },
+    {
+      "bytes": 51002,
+      "path": "docs/en/user-guide/img/multiple-select.png",
+      "sha256": "5f41b78d08bcf980b51f42b5969515a41f1aa70dfaa8f57b2222399883f064a7"
+    },
+    {
+      "bytes": 58989,
       "path": "docs/en/user-guide/img/new-field.png",
-      "sha256": "f81b70671570c67e80b955ac1ce60affe35811be4c7b979c2c9dc32900077271"
+      "sha256": "d3aef3f2c8922074ac986621ab837a8214a4e85bedcfbd99dad4c13c1011a832"
+    },
+    {
+      "bytes": 22357,
+      "path": "docs/en/user-guide/img/pdf.png",
+      "sha256": "8a727f65ed4f7001f170d5dd5f3b5a3ae12a44ad884ee356793242f984fdbd04"
     },
     {
       "bytes": 44694,
@@ -200,6 +285,16 @@
       "bytes": 44597,
       "path": "docs/en/user-guide/img/record.png",
       "sha256": "1766ed28eaba2b9c1845e18f64ca8ebf30f1402b3fcf9bc8ae362b85c93043d7"
+    },
+    {
+      "bytes": 78761,
+      "path": "docs/en/user-guide/img/rollup-form.png",
+      "sha256": "a850e85af1d07e477623857495c648c447b07708281a543177093d5a6e132abc"
+    },
+    {
+      "bytes": 45286,
+      "path": "docs/en/user-guide/img/rollup.png",
+      "sha256": "a94a020d92ffac96173d6cd69b7013606cfe356edfadb0e4fb0e50062a6ccedd"
     },
     {
       "bytes": 54115,
@@ -227,239 +322,334 @@
       "sha256": "8b97a80ad184f527b0b21ae8a98c377cebdb970ad3fd697276516327de4cc6a3"
     },
     {
-      "bytes": 1356,
+      "bytes": 1608,
       "path": "docs/en/user-guide/index.md",
-      "sha256": "c1de302a7f97f59d163af1969146bf5b93103ab81c57f61eafbd58802dc08b26"
+      "sha256": "93accd42be2e73eab6f6d2a94207e4d2a375ad472e2ac0a4f9bdeae956fc552a"
     },
     {
-      "bytes": 1138570,
+      "bytes": 1940045,
       "path": "docs/en/user-guide/user-guide.pdf",
-      "sha256": "802a1028259266d41ba57a99ecddddfffaba77b514c558eacde4515c1f888d20"
+      "sha256": "086b362ad1592a26b0505a619fb2d8f83bbcd05249b2d0331bd2b091b1b500f4"
     },
     {
-      "bytes": 192986,
+      "bytes": 216142,
       "path": "docs/ru/api/openapi.json",
-      "sha256": "41a650ae795acb52c5aa79d4e013192b39135b36f47ef9d9365a51d92fa62693"
+      "sha256": "f47b3b27181db0db6ce8b2969e7e3a82cca3b20a6955a4b9d7401661f80602d3"
     },
     {
       "bytes": 3641,
       "path": "docs/ru/permissions.md",
-      "sha256": "406a098175d5a376746562e95c614e2be99f88eb2ed6a6736fe7e4e694c853e9"
+      "sha256": "6174926afcc92369521f1a826d5ede7437c7ecdb99fd16e968149381176600dd"
     },
     {
-      "bytes": 1313,
+      "bytes": 1580,
       "path": "docs/ru/user-guide/01-vkhod.md",
-      "sha256": "db68e654c5e58783d4a57121a0122b83c649f63d4a62124f2486cf5481cd2495"
+      "sha256": "056b0735f060ea019541f76fa0e08fd1c9d7ed6b676850da80b14ba80d8c13a2"
     },
     {
       "bytes": 1378,
       "path": "docs/ru/user-guide/02-glavnaya-prostranstva-i-bazy.md",
-      "sha256": "776f62269381a945f34acd8275fde0008520f9ea4a7073a234d7b659b6cb240f"
+      "sha256": "5e725414958c1d59f868185d9f06472e776abad08e456866f8c58b0638d33cd4"
     },
     {
       "bytes": 1093,
       "path": "docs/ru/user-guide/03-baza-i-tablitsy.md",
-      "sha256": "031586a54f37d7dcd1f6a93cce2d979c7cf5f34517219cea4d61ec0eb9c79b16"
+      "sha256": "c15666014af71341dd0ebeb67c8ef21b0b11564fb5630e814e8794cbc14a5a6c"
     },
     {
       "bytes": 2117,
       "path": "docs/ru/user-guide/04-zapisi-v-tablitse.md",
-      "sha256": "7429c2244fb6a2ba591733cb433253e13fd5da174af25f4c0ff48efe0075ad29"
+      "sha256": "f5ff84f7ad75584ddb171a58344cb9664950532327272cb0b43dae6135efbddd"
     },
     {
-      "bytes": 1831,
+      "bytes": 2508,
       "path": "docs/ru/user-guide/05-polya.md",
-      "sha256": "3854ee76a84177db0b80d66adb938aff1695b277d56892759de5e57ddde32a2d"
+      "sha256": "de8e20ce407be05f90103b8c310d3a69fb9157f31722def44a490f455a158f63"
     },
     {
-      "bytes": 909,
-      "path": "docs/ru/user-guide/06-zapis-tselikom.md",
-      "sha256": "a17b398c9e803d98aa27c027c6b2b2c91f44a4d18cc46310f79a6204b86781c9"
+      "bytes": 1261,
+      "path": "docs/ru/user-guide/06-znacheniya-polei-raznykh-tipov.md",
+      "sha256": "2ff60892599c831fb18f9e60a457c498cbdd2b948c933133001df43b52b535f4"
     },
     {
-      "bytes": 2435,
-      "path": "docs/ru/user-guide/07-predstavleniya.md",
-      "sha256": "9f67663c42ee8bc7037f20769698732caf5798a30b5e0f7add6d09515bef79a3"
+      "bytes": 1598,
+      "path": "docs/ru/user-guide/07-svyazi-mezhdu-tablitsami.md",
+      "sha256": "567dda237c5a755aeb476a8a6ff3a46334d330159cb9ebaccb5cac0b90e2bee3"
     },
     {
-      "bytes": 1196,
-      "path": "docs/ru/user-guide/08-filtr.md",
-      "sha256": "2e7b4163b0f1d5c583520bcd46fe4a2d5a3293a9a60f165e49520e9d1e2ea1cc"
+      "bytes": 2048,
+      "path": "docs/ru/user-guide/08-podstanovka-kolichestvo-i-svodka.md",
+      "sha256": "bb43f3a92ee846e34f5016fcf3cbe31acbf8fbebab37d4f29999d0338bf1ebfe"
     },
     {
-      "bytes": 1751,
-      "path": "docs/ru/user-guide/09-sortirovka.md",
-      "sha256": "f57f3e8c9d92005b793110c4cb94c15b1c776a495b9446814ba2ce1fd4063839"
+      "bytes": 2756,
+      "path": "docs/ru/user-guide/09-formuly.md",
+      "sha256": "b4bb9f5624fc99d1d10785cc97651c044bf73a00fc93a254a2bd2869cb77ce6a"
+    },
+    {
+      "bytes": 1767,
+      "path": "docs/ru/user-guide/10-vlozheniya.md",
+      "sha256": "42ddaa914fb60cba411242e6a6dcf161fbc3385c4ec831161fb2887680627bef"
+    },
+    {
+      "bytes": 910,
+      "path": "docs/ru/user-guide/11-zapis-tselikom.md",
+      "sha256": "57ce8e0ad1e994621f5b4e4f327a49e922313fc5388f4e9a9ff3aa8fd159104a"
+    },
+    {
+      "bytes": 2436,
+      "path": "docs/ru/user-guide/12-predstavleniya.md",
+      "sha256": "aadaf3b1d479134f3905eed76b94a8524099fc9c9114f6fca063197f7ed62564"
+    },
+    {
+      "bytes": 1197,
+      "path": "docs/ru/user-guide/13-filtr.md",
+      "sha256": "f67f8467894136865b47afd59d70fcead07c7285e88f1c1043124950fae39004"
+    },
+    {
+      "bytes": 1752,
+      "path": "docs/ru/user-guide/14-sortirovka.md",
+      "sha256": "ab4f56b34ea6f7257efe0238b4532903c1e6b67e8498dc196eb3bb2fc5361577"
     },
     {
       "bytes": 1294,
-      "path": "docs/ru/user-guide/10-gruppirovka.md",
-      "sha256": "40a990ac6f7668c1fb737e7baff5a1ae83c9a03f37c3df70e8a11ce5bf870fcc"
+      "path": "docs/ru/user-guide/15-gruppirovka.md",
+      "sha256": "50c4a18d66e9c37c25cc9409bc1f82f63fd1b87a7c0d1a426cd8595823e2ab12"
     },
     {
       "bytes": 804,
-      "path": "docs/ru/user-guide/11-tsvet-zapisei.md",
-      "sha256": "0cb3decd01a2cb47d38e3697e31ed37cdc5272190af1ff72e7e090df3d9182d4"
+      "path": "docs/ru/user-guide/16-tsvet-zapisei.md",
+      "sha256": "f44d315c31f9dc63b1494c6638ad11ed93c5d6c5de33163c8b1c8141ff1b7c1e"
     },
     {
       "bytes": 876,
-      "path": "docs/ru/user-guide/12-itogi-pod-kolonkami.md",
-      "sha256": "3fbc8bf7c5b62a9ac12c355e10384d881883911c7c54ba2e0719b62aca6c4881"
+      "path": "docs/ru/user-guide/17-itogi-pod-kolonkami.md",
+      "sha256": "975735560fbc70c2e860d2996243a3b220a2dc976eff5da103e1c0f51fcac2d3"
     },
     {
       "bytes": 892,
-      "path": "docs/ru/user-guide/13-poisk-v-predstavlenii.md",
-      "sha256": "c120a01b372d06644aea6ad967309cd39cde083ac362a11f8fa680e6d14a7692"
+      "path": "docs/ru/user-guide/18-poisk-v-predstavlenii.md",
+      "sha256": "42b05215b80eac1088c7b0eff904ae4e2589c34f7927305a4ca8e8e820f325a3"
     },
     {
       "bytes": 1361,
-      "path": "docs/ru/user-guide/14-vydelenie-kopirovanie-i-vstavka.md",
-      "sha256": "3da91f93506ae57fa33e9398e62cb7288a07fc368edc2abf595519985307c049"
+      "path": "docs/ru/user-guide/19-vydelenie-kopirovanie-i-vstavka.md",
+      "sha256": "df60fa89cfe57b38389a80b89eb334ef78af9384f9806318f54c9b26ce2c7571"
     },
     {
       "bytes": 722,
-      "path": "docs/ru/user-guide/15-otmena-deistvii.md",
-      "sha256": "91cfc6959605e82de849f922dd79d417da8ac691e16cdccf3f285f431e202231"
+      "path": "docs/ru/user-guide/20-otmena-deistvii.md",
+      "sha256": "3729edf7e6cf9c2eb279b3c5886fae81e3d16fe848afb059acf846793420b746"
     },
     {
       "bytes": 1881,
-      "path": "docs/ru/user-guide/16-import-iz-csv-i-excel.md",
-      "sha256": "cc4ea4a9d31888400f7d25fd1493b8e951a475f1935c59ef346fa3b3f9e9a616"
+      "path": "docs/ru/user-guide/21-import-iz-csv-i-excel.md",
+      "sha256": "47ed784fa86f44245f43e97e678ccc06422019739369fc0c4dc59a4f9aa3a591"
     },
     {
       "bytes": 975,
-      "path": "docs/ru/user-guide/17-eksport-v-csv-i-excel.md",
-      "sha256": "7f352166e2b259f356720e191010a9cc1ab225ddc6e02b336e839eb84df882da"
+      "path": "docs/ru/user-guide/22-eksport-v-csv-i-excel.md",
+      "sha256": "75aeb3fe89d80ed35e01973b3c9932a5bd6313456dff2c818f19561f732343e2"
     },
     {
       "bytes": 967,
-      "path": "docs/ru/user-guide/18-bystryi-perekhod.md",
-      "sha256": "4355b352b4f4b8c81ce1cc714b1466c06762e50149fafcddd72a55636b0524c9"
+      "path": "docs/ru/user-guide/23-bystryi-perekhod.md",
+      "sha256": "2bbbf653db2a5ecd9c1745de02daf97b100e333f2ef0b253f680731a5184513d"
     },
     {
       "bytes": 590,
-      "path": "docs/ru/user-guide/19-sovmestnaya-rabota.md",
-      "sha256": "d3eb80252258498043422e9f7da065b0f5b3616024870cb728bbcca7b02ff8e6"
+      "path": "docs/ru/user-guide/24-sovmestnaya-rabota.md",
+      "sha256": "ee7c3a1f0f7823fa7d6d5f21760c1454df74b082be3cb02a16cb31df5ba52f1b"
     },
     {
       "bytes": 589,
-      "path": "docs/ru/user-guide/20-tema-oformleniya.md",
-      "sha256": "26243f59f04fd2429a760d31f21dceaa9ad91396505623759096c3246f177710"
+      "path": "docs/ru/user-guide/25-tema-oformleniya.md",
+      "sha256": "a9e9f5100045dde4de69422e0a045f556bbc8beffb6daf382f3b64b43720e561"
     },
     {
       "bytes": 1067,
-      "path": "docs/ru/user-guide/21-yazyk-interfeisa.md",
-      "sha256": "7ffb4398adbc55a348b35d07aa25486b39d9da5c9187e29c00e8e361eb3e333c"
+      "path": "docs/ru/user-guide/26-yazyk-interfeisa.md",
+      "sha256": "3c3d6e5bb6c9ab92da9fc7c408c649b07d6eea48c2ffb2c24397f56508df1569"
+    },
+    {
+      "bytes": 55640,
+      "path": "docs/ru/user-guide/img/attachments.png",
+      "sha256": "7475e9ce0154cd4461af04fae7024b4a1d6c3c0ccfc2b00c11e637332482b8db"
     },
     {
       "bytes": 74201,
       "path": "docs/ru/user-guide/img/colors.png",
-      "sha256": "44bb1c3ae2868f76a94d80e081db3682a4259c87595cdd27127368be46484b98"
+      "sha256": "093a223c196f80058bd0ee4dfdf7b9d17d42146bb97eb61999cae273425f87f0"
     },
     {
-      "bytes": 59716,
+      "bytes": 48342,
+      "path": "docs/ru/user-guide/img/count.png",
+      "sha256": "88ebf78d5f91468e7af626d742ce42836890675d03806b0f6a8e67b5251cc137"
+    },
+    {
+      "bytes": 59722,
       "path": "docs/ru/user-guide/img/export.png",
-      "sha256": "73e41f4cea5e036c6734b63ee35c2920503b1717e3f4a25535904d7a69ecf526"
+      "sha256": "63e580554203f87e9deac6fd00b4845a2da7a56c5a2c1a8667f7ca89c6fa5694"
     },
     {
-      "bytes": 59915,
+      "bytes": 62781,
       "path": "docs/ru/user-guide/img/field-menu.png",
-      "sha256": "2c31d2054c8573f42759008d661928af6ad8a7318b9288865098071fcc2f9a5c"
+      "sha256": "f21e2b9ef2df94f6398ada1d7f23548fdbcafcbcdc6e16177f595f4fe5bddf26"
     },
     {
-      "bytes": 60937,
+      "bytes": 52390,
+      "path": "docs/ru/user-guide/img/field-types.png",
+      "sha256": "a9604c9f01151f46f58764feff1db9a839b2c354e3138a5e2e4b10cdebe5bae7"
+    },
+    {
+      "bytes": 60931,
       "path": "docs/ru/user-guide/img/filter.png",
-      "sha256": "79945e7b1f094b189c96e103fe6b047a9116d6a550710e90108bce91c1617795"
+      "sha256": "b26ccaf75446487be5777a5d966814ddc07c5c8287040150bdb9484674339c48"
     },
     {
-      "bytes": 49621,
+      "bytes": 75761,
+      "path": "docs/ru/user-guide/img/formula-hint.png",
+      "sha256": "8291ca54cf61468bd76c1ca9d0e5ac3531a7df0c8b11f36c40f304b01c7dc9a1"
+    },
+    {
+      "bytes": 82799,
+      "path": "docs/ru/user-guide/img/formula-mistake.png",
+      "sha256": "fa4008a93b368bf8a4b678651f521df16e322078a24af8c6aea7ad447153f69e"
+    },
+    {
+      "bytes": 81982,
+      "path": "docs/ru/user-guide/img/formula-offers.png",
+      "sha256": "06e29adbf24f893c724c1a5aabc28fe72e12e913f0d87bfaaaca444d21716193"
+    },
+    {
+      "bytes": 49398,
+      "path": "docs/ru/user-guide/img/formula-primary.png",
+      "sha256": "2a400a82f872db83e7e1f8dfc1236de782d2bec1449e940846424a5fa53dcde6"
+    },
+    {
+      "bytes": 49259,
+      "path": "docs/ru/user-guide/img/formula.png",
+      "sha256": "3acbf9ae386bf01f866c578dd6ee5b603ee947c8fb7f94a9fb1f7479b59a61c5"
+    },
+    {
+      "bytes": 49625,
       "path": "docs/ru/user-guide/img/grid-dark.png",
-      "sha256": "5b64ebbedda3976810a8ffa5eafd22a84c9b727955816ea8a056dc55a937c298"
+      "sha256": "b1c9e483058feeaec17aa36d6495580539e9efcaf6a3ceca903b27d268950668"
     },
     {
-      "bytes": 49718,
+      "bytes": 49719,
       "path": "docs/ru/user-guide/img/grid.png",
-      "sha256": "d0507bf5dd5af9e7a8eaf6eb406d581b64d9d4c8eb7cb5cb2a2cf7ad730a978e"
+      "sha256": "1e395fd18405531931cf9fcd72343bf2cb3b0bf209754f422e73b01db5ac08f0"
     },
     {
       "bytes": 64246,
       "path": "docs/ru/user-guide/img/groups.png",
-      "sha256": "19593ccf756be8b18b46b2c190121f74b776850b68d50d179dd31f070a56fb88"
+      "sha256": "bef4bd447d59b60d541dd398c23048c0c8e3e04e6449b99cef00168c880d4ae2"
     },
     {
-      "bytes": 32116,
+      "bytes": 32134,
       "path": "docs/ru/user-guide/img/home.png",
-      "sha256": "22f01adcad1ef6112cec64b72282f984e2abdf5ec8f3d8a0e4e4c5df5c35c5af"
+      "sha256": "7c1ada9e8ddd7cc3ee035221ec8ad3e7e6a0bf7402b7522ad80f821c431d57f5"
     },
     {
-      "bytes": 69357,
+      "bytes": 69335,
       "path": "docs/ru/user-guide/img/import.png",
-      "sha256": "28758b23afb451c95816d81b3bbabf0b8a59ba3fd548f4d324412df4b0aa67d2"
+      "sha256": "0cad2d5ad27feb783ebb50c45f5683a6777a3bf558b474dc0f6a456e0e661fe8"
     },
     {
-      "bytes": 47732,
+      "bytes": 47182,
       "path": "docs/ru/user-guide/img/language-en.png",
-      "sha256": "a464b03c7c149eceacd647ff6aef7249884d19ccc0ef99ff936715725d9724cf"
+      "sha256": "0db188fce745b1e80db9af7857454d6c12780afc5766e08221662627e647e891"
     },
     {
-      "bytes": 14897,
+      "bytes": 54370,
+      "path": "docs/ru/user-guide/img/link.png",
+      "sha256": "e3a7eaf8c0332fd5133daf2fd10effbcabf7d3aa45db303782714fbbdec95023"
+    },
+    {
+      "bytes": 15436,
       "path": "docs/ru/user-guide/img/login.png",
-      "sha256": "09c08e67fe7ed60aec504e770574ba7c28669a82896a47d35d210732bd1c7cc5"
+      "sha256": "b772845d7617e48b9947b0bdd8746a4cb9d0b76e61d113b23e6ac4eb153eb1a1"
     },
     {
-      "bytes": 61759,
+      "bytes": 48969,
+      "path": "docs/ru/user-guide/img/lookup.png",
+      "sha256": "7fa12305289aaea3ce4009491e692aa4268a2be691834f05c3aa10417b10f5ef"
+    },
+    {
+      "bytes": 54218,
+      "path": "docs/ru/user-guide/img/multiple-select.png",
+      "sha256": "306208665ac13a92a3302b234e01b8736b35fb2548f0695044d9f111f432b80b"
+    },
+    {
+      "bytes": 62742,
       "path": "docs/ru/user-guide/img/new-field.png",
-      "sha256": "10b32202aa408975542bdd33a15443092338566b7655cb248b3552da4f34adbf"
+      "sha256": "0d053166ce12a667b745af3204b7daf837da1029d4029e9e01fb8234284bc216"
     },
     {
-      "bytes": 45823,
+      "bytes": 22013,
+      "path": "docs/ru/user-guide/img/pdf.png",
+      "sha256": "b44104f7948be7301969071fc7f1b87d7296d8ae394615bc00c6c20e0e9b7b2d"
+    },
+    {
+      "bytes": 45828,
       "path": "docs/ru/user-guide/img/range.png",
-      "sha256": "95e69224c5868806894f9edbcf114ca369567c184ed87e5826aea4b97d3e6ccc"
+      "sha256": "8c0ff0cc47bf3d9c1cf254004bf25c67b8d09d2f5a5f3b2a54547bc08baa7aad"
     },
     {
-      "bytes": 49330,
+      "bytes": 49334,
       "path": "docs/ru/user-guide/img/record.png",
-      "sha256": "5f764aa100808f35d5d66656b9343503b8656512f3478582b551317b6073696a"
+      "sha256": "22b9c8600240e726a19e70b50cb7d7e53de40f4131de2d23366deec0900e694c"
     },
     {
-      "bytes": 59155,
+      "bytes": 85583,
+      "path": "docs/ru/user-guide/img/rollup-form.png",
+      "sha256": "bc71f6edf64d8198353425590603d1a4ff878e010934a32cea955bc93815e274"
+    },
+    {
+      "bytes": 47657,
+      "path": "docs/ru/user-guide/img/rollup.png",
+      "sha256": "12802a592b29e9c953e2fb3ecf8777045fcb0de89936f833606673f86568bea0"
+    },
+    {
+      "bytes": 59154,
       "path": "docs/ru/user-guide/img/search.png",
-      "sha256": "5deae8021699e52bed73e211f832ead57bb9593fcb38778ff645b85a70acd148"
+      "sha256": "eee2eab409eb474e821a4ee0e07bb9cd6f5490220fbd504ee703a5d823839e56"
     },
     {
-      "bytes": 57283,
+      "bytes": 57281,
       "path": "docs/ru/user-guide/img/sorted-held.png",
-      "sha256": "4eb06a594225d74dd4e84d957f15575af6289ee3bc5e09e4e965c649b60c61dc"
+      "sha256": "550bdb13fc8b3e0ede983ba1d3a46b0b5a52e27228ae9f9721efa2a27167943f"
     },
     {
-      "bytes": 64669,
+      "bytes": 64676,
       "path": "docs/ru/user-guide/img/switcher-records.png",
-      "sha256": "529c04f243f715b9013d5ef9c9d20b98a8f2e2740c92a2192c8ec3f13d79686a"
+      "sha256": "813a87c96681f8035aebd3a2294f00ddb631813069ca956f66564b9227db8de1"
     },
     {
-      "bytes": 63360,
+      "bytes": 63373,
       "path": "docs/ru/user-guide/img/switcher.png",
-      "sha256": "b090d8f90b65e7a42b8a2db6cac4bb8ee46488d82d9bf78fc5c3bb6b6fa2a99e"
+      "sha256": "61c7d3842080dd23e9fbf80c644f810b4b20cd825165734c33f80be30f9b29d6"
     },
     {
-      "bytes": 51418,
+      "bytes": 51419,
       "path": "docs/ru/user-guide/img/views.png",
-      "sha256": "1f3a7549a8ecd9c840b5e3616cfd1a2c8cb8959800d2c73e27491fa527bac489"
+      "sha256": "6cc44b31ae03db043c1d3e35d7cd0a79fc7f0595fc6821558de339bf18fee4ca"
     },
     {
-      "bytes": 2096,
+      "bytes": 2445,
       "path": "docs/ru/user-guide/index.md",
-      "sha256": "6673ef2cfe7447df27195faf5e0482256be6fb7ba927a214830a13228e627125"
+      "sha256": "e3e5e511e51dee529fd31b46635c66fd6230dfc918bd1d2c0e6fbe5d5fb37dc3"
     },
     {
-      "bytes": 1252563,
+      "bytes": 2097426,
       "path": "docs/ru/user-guide/user-guide.pdf",
-      "sha256": "89d158f04f6208a72281f2db8b9d41cd925a2ab737f957b51a19fd0113701654"
+      "sha256": "115a48b52f27c327447bbdc2681a973231df0bd0ad11fb042791b6f487ab0f58"
     },
     {
-      "bytes": 1613,
+      "bytes": 1984,
       "path": "releases/en/index.md",
-      "sha256": "ea8924812569eb583f7be6345a1ba657b26f0a97392d7ff14f522ff82a11774d"
+      "sha256": "f7e0a71eac56e1fca91763185b475fb0d7fbb4bfa8098b7707141205a8386f96"
     },
     {
       "bytes": 1376,
@@ -477,9 +667,14 @@
       "sha256": "72526593aca37e377a018cf354f60ed441177fc7863e8db9b417400660b9b5c1"
     },
     {
-      "bytes": 2784,
+      "bytes": 1856,
+      "path": "releases/en/v0.3.0.md",
+      "sha256": "51463dccb8c1d9c8884fcd91d3c4eaf8ac33820879ee8890ac7058f1ca5d85c6"
+    },
+    {
+      "bytes": 3251,
       "path": "releases/ru/index.md",
-      "sha256": "63cd024951f19d25cef8c04043ef0d6f344d5e69e6705a9778fa23b1d2888702"
+      "sha256": "92a6911f04c00c1866faa41d34e86926be8308e348ced17c7ca53f5caa4d1420"
     },
     {
       "bytes": 2168,
@@ -495,9 +690,14 @@
       "bytes": 2808,
       "path": "releases/ru/v0.2.0.md",
       "sha256": "87aa5bc936fb4df24aa444b5227e80632be7be313a6d955dd8fb80f3824ac625"
+    },
+    {
+      "bytes": 3170,
+      "path": "releases/ru/v0.3.0.md",
+      "sha256": "930d8b93ba1119920223335c400d4cc79b76a832892222b62b594b9c6eb0f812"
     }
   ],
   "product": "xtab",
   "schema": 1,
-  "version": "v0.2.0"
+  "version": "v0.3.0"
 }

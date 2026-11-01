@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "servers": [
     {
@@ -1053,7 +1053,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Переименовать таблицу или изменить её описание (создатель базы).",
+        "summary": "Переименовать или описать таблицу либо выбрать поле, которое называет её записи (создатель базы).",
         "operationId": "update_table",
         "parameters": [
           {
@@ -1108,7 +1108,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: название занято или недопустимо, описание слишком длинное",
+            "description": "validation-failed: имя занято или неверно, описание слишком длинное, первичное поле из другой таблицы или типа, который не называет записи",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1250,7 +1250,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Переименовать поле, изменить его описание или настройки (создатель базы). Варианты поля «один из списка» передаются списком целиком: существующие — с `id`, новые — без него.",
+        "summary": "Переименовать поле, изменить его описание или настройки (создатель базы). Варианты полей «один из списка» и «несколько из списка» передаются списком целиком: существующие — с `id`, новые — без него.",
         "operationId": "update_field",
         "parameters": [
           {
@@ -1280,6 +1280,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Field"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Принято: новая формула проверяется и считается в фоне; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
                 }
               }
             }
@@ -1656,6 +1666,30 @@
                 "null"
               ],
               "format": "int64"
+            }
+          },
+          {
+            "name": "q",
+            "in": "path",
+            "description": "Часть имени или e-mail, без учёта регистра; не длиннее 200 символов.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "active",
+            "in": "path",
+            "description": "`true` — только активные участники: тех, кого можно выбрать в поле пользователей.",
+            "required": true,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           }
         ],
@@ -2694,6 +2728,78 @@
         }
       }
     },
+    "/tables/{table}/formula-preview": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Формула, вычисленная на одной записи до сохранения (читатель базы): редактор формулы показывает так значение формулы с функцией, которую вычисляет только сервер.",
+        "operationId": "formula_preview",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormulaPreview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Значение формулы на записи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormulaValue"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: таблица или запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: формула — что в ней не так и где",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/views/{view}/count": {
       "get": {
         "tags": [
@@ -3057,7 +3163,7 @@
         "tags": [
           "imports"
         ],
-        "summary": "Начать загрузку файла для импорта, до 50 МБ; байты передаются следом через `PUT /uploads/{upload}`.",
+        "summary": "Начать загрузку файла: для импорта — до 50 МБ; для поля вложений — до лимита установки (по умолчанию 100 МБ), с правом изменять записи его таблицы. Байты передаются следом через `PUT /uploads/{upload}`.",
         "operationId": "create_upload",
         "requestBody": {
           "content": {
@@ -3080,8 +3186,28 @@
               }
             }
           },
+          "403": {
+            "description": "forbidden: нет права изменять записи таблицы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такого поля или записи нет",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
-            "description": "validation-failed: имя или размер",
+            "description": "validation-failed: имя, размер или поле",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3118,7 +3244,7 @@
         "tags": [
           "imports"
         ],
-        "summary": "Байты загрузки (`application/octet-stream`). Тип определяется по первым байтам: CSV или XLSX; всё остальное отклоняется и не сохраняется.",
+        "summary": "Байты загрузки (`application/octet-stream`). Тип определяется по первым байтам: для импорта — CSV или XLSX, всё остальное отклоняется и не сохраняется; для вложения — любой тип, вместе с SHA-256 байтов. Загрузка вложения, которая 30 секунд ничего не передаёт или через минуту идёт медленнее 10 КБ в секунду, прерывается.",
         "operationId": "put_upload",
         "parameters": [
           {
@@ -3167,8 +3293,197 @@
               }
             }
           },
+          "408": {
+            "description": "request-timeout: байты перестали приходить или шли слишком медленно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "422": {
             "description": "validation-failed: unsupported-file или too-large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "too-many-uploads: узел сейчас не принимает новых загрузок; dependency-unavailable: нет хранилища файлов",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{file}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Файл вложения: растровые изображения, видео и аудио браузер показывает, всё остальное скачивается; скрипт из файла никогда не выполняется. Можно запросить один диапазон байтов (`Range: bytes=…`); `If-None-Match` с тегом байтов отвечает `304`.",
+        "operationId": "get_file",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "description": "`fil_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "206": {
+            "description": "Запрошенный диапазон байтов",
+            "content": {
+              "application/octet-stream": {}
+            }
+          },
+          "304": {
+            "description": "Файл совпадает с тем, что уже есть у браузера"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такого файла нет или его поле удалено",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "416": {
+            "description": "range-not-satisfiable: диапазон за пределами файла",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-downloads: уже идут восемь скачиваний или узел занят",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: хранилище файлов не отвечает",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/{file}/thumbs/{size}": {
+      "get": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Миниатюра изображения-вложения: 64, 256 или 1024 px по длинной стороне, JPEG, а для изображения с прозрачностью — PNG. Строится в фоне после загрузки: до этого, а также для файлов, которые не изображения, — `404`; 1024 px — только у изображения больше этого размера.",
+        "operationId": "get_thumbnail",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "description": "`fil_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "64, 256 или 1024",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Миниатюра",
+            "content": {
+              "image/jpeg": {}
+            }
+          },
+          "304": {
+            "description": "Файл совпадает с тем, что уже есть у браузера"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такого файла или размера нет, или миниатюра ещё не построена",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "too-many-downloads: уже идут восемь скачиваний или узел занят",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "dependency-unavailable: хранилище файлов не отвечает",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3878,7 +4193,7 @@
       },
       "ChoiceInput": {
         "type": "object",
-        "description": "Вариант поля «один из списка». Без `id` — новый.",
+        "description": "Вариант поля «один из списка» или «несколько из списка». Без `id` — новый.",
         "required": [
           "name"
         ],
@@ -3903,7 +4218,7 @@
       },
       "ChoiceOut": {
         "type": "object",
-        "description": "Вариант поля «один из списка».",
+        "description": "Вариант поля «один из списка» или «несколько из списка».",
         "required": [
           "id",
           "name",
@@ -4064,7 +4379,7 @@
           },
           "op": {
             "type": "string",
-            "description": "Оператор: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`…"
+            "description": "Оператор: `is`, `is_not`, `contains`, `<`, `between`, `is_within`, `is_me`, `has_any_of`…"
           },
           "value": {
             "type": [
@@ -4307,7 +4622,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`single_line_text`, `long_text`, `number`, `checkbox`, `single_select`, `date`, `date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`."
+            "description": "`single_line_text`, `long_text`, `email`, `url`, `phone_number`, `number`, `currency`, `percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`, `user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`, `formula`, `lookup`, `count`, `rollup`."
           },
           "description": {
             "type": "string",
@@ -4382,6 +4697,50 @@
           }
         ],
         "description": "Узел фильтра в API."
+      },
+      "FormulaPreview": {
+        "type": "object",
+        "description": "Формула, вычисленная на одной записи до сохранения: редактор формулы показывает так значение формулы с функцией, которую вычисляет только сервер.",
+        "required": [
+          "formula",
+          "record"
+        ],
+        "properties": {
+          "formula": {
+            "type": "string",
+            "description": "Текст формулы, поля — по имени в фигурных скобках."
+          },
+          "record": {
+            "type": "string",
+            "description": "Запись, `rec_…`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormulaResult": {
+        "type": "string",
+        "description": "Тип результата формулы — её колонки и значений. Его задаёт сервер по проверке формулы, а не пользователь.",
+        "enum": [
+          "number",
+          "text",
+          "flag",
+          "date",
+          "date_time",
+          "texts"
+        ]
+      },
+      "FormulaValue": {
+        "type": "object",
+        "description": "Значение формулы на записи — так же, как запись несёт значение поля «Формула»: число, дата, момент, флаг, тексты или `{\"error\": \"DIV_ZERO\"}`.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "object",
+            "description": "Значение; `null` — пусто."
+          }
+        }
       },
       "FoundRecord": {
         "type": "object",
@@ -4507,7 +4866,7 @@
             "items": {
               "type": "object"
             },
-            "description": "Значения группы и групп, в которые она входит, начиная с первого уровня, в формах значений записей; `null` — пусто. Дата и время группируются по дню в часовом поясе организации, текст — по первым 128 символам."
+            "description": "Значения группы и групп, в которые она входит, начиная с первого уровня, в формах значений записей; `null` — пусто. Дата и время группируются по дню в часовом поясе организации, текст — по первым 128 символам, связь — по названиям связанных записей, `[{\"name\": …}]`."
           },
           "count": {
             "type": "integer",
@@ -4899,6 +5258,20 @@
               "null"
             ],
             "description": "Язык интерфейса, выбранный человеком: `ru` или `en`; нет — язык браузера."
+          },
+          "org_locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Язык организации (`ru-RU`): слова, которыми её формулы пишут даты."
+          },
+          "org_timezone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Часовой пояс организации (`Europe/Moscow`): в нём считаются даты её формул."
           }
         }
       },
@@ -5060,6 +5433,20 @@
             "format": "int64",
             "description": "Его размер в байтах.",
             "minimum": 0
+          },
+          "field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`fld_…` поля вложений, для которого загружается файл: обязателен для вложения."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` записи, в ячейку которой загружается файл, если запись уже есть."
           }
         },
         "additionalProperties": false
@@ -5115,7 +5502,7 @@
       },
       "OptionsInput": {
         "type": "object",
-        "description": "Настройки поля: `precision` числа (0–8), `choices` поля «один из списка» — весь список по порядку; вариант, которого нет в списке, удаляется.",
+        "description": "Настройки поля: `precision` числа, суммы или процента (0–8), `currency` суммы, `duration_format` длительности, `max` рейтинга, `choices` полей «один из списка» и «несколько из списка» — весь список по порядку; вариант, которого нет в списке, удаляется.",
         "properties": {
           "precision": {
             "type": [
@@ -5123,7 +5510,30 @@
               "null"
             ],
             "format": "int32",
-            "description": "Знаков после запятой у числа.",
+            "description": "Знаков после запятой у числа, суммы или процента.",
+            "minimum": 0
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Код валюты суммы по ISO 4217: `RUB` (по умолчанию), `USD`, `EUR`, `CNY`, `KZT`, `BYN`, `UZS`, `AMD`, `KGS`, `AZN`, `GEL`, `TRY`, `AED`, `INR`, `GBP`, `JPY`."
+          },
+          "duration_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Как показывается длительность: `h:mm` (по умолчанию), `h:mm:ss`, `h:mm:ss.s`, `h:mm:ss.ss`, `h:mm:ss.sss`."
+          },
+          "max": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Звёзд рейтинга, 1–10 (по умолчанию 5).",
             "minimum": 0
           },
           "choices": {
@@ -5134,7 +5544,49 @@
             "items": {
               "$ref": "#/components/schemas/ChoiceInput"
             },
-            "description": "Варианты поля «один из списка»."
+            "description": "Варианты поля «один из списка» или «несколько из списка»."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Таблица той же базы, с которой связывает поле (`tbl_…`); указывается при добавлении поля и потом не меняется."
+          },
+          "single": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Связь не более чем с одной записью (по умолчанию — с несколькими)."
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Текст формулы поля «Формула», например `{Price} * {Quantity}`; проверяется по полям таблицы. У сводки по связи — её выражение над `values`, значениями связанных записей: `SUM(values)`."
+          },
+          "link_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле связи этой же таблицы, через которое читают подстановка, количество связей или сводка по связи (`fld_…`); задаётся при добавлении поля и потом не меняется."
+          },
+          "lookup_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле связанной таблицы, которое показывает подстановка или сводит сводка по связи (`fld_…`): сводка берёт числа и тексты; задаётся при добавлении поля и потом не меняется."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Какие связанные записи сводит сводка по связи: фильтр по полям связанной таблицы, как фильтр представления; без него — все. Задаётся при добавлении поля."
           }
         },
         "additionalProperties": false
@@ -5149,7 +5601,30 @@
               "null"
             ],
             "format": "int32",
-            "description": "Знаков после запятой у числа.",
+            "description": "Знаков после запятой у числа, суммы или процента.",
+            "minimum": 0
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Код валюты суммы по ISO 4217."
+          },
+          "duration_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Как показывается длительность."
+          },
+          "max": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Звёзд рейтинга.",
             "minimum": 0
           },
           "choices": {
@@ -5160,7 +5635,67 @@
             "items": {
               "$ref": "#/components/schemas/ChoiceOut"
             },
-            "description": "Варианты поля «один из списка»."
+            "description": "Варианты поля «один из списка» или «несколько из списка»."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Таблица, с которой связывает поле (`tbl_…`)."
+          },
+          "inverse_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Обратное поле связи в связанной таблице (`fld_…`); у связи таблицы с самой собой его нет."
+          },
+          "single": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Связь не более чем с одной записью."
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Текст формулы поля «Формула»; ссылки показаны текущими именами полей: формула читает поле, как бы оно ни называлось."
+          },
+          "result": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FormulaResult",
+                "description": "Тип значений поля «Формула» или сводки по связи: `number`, `text`, `flag`, `date`, `date_time` или `texts` (список текстов); у подстановки — каждого из её значений."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "link_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле связи, через которое читают подстановка, количество связей или сводка по связи (`fld_…`)."
+          },
+          "lookup_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле связанной таблицы, которое показывает подстановка или сводит сводка по связи (`fld_…`)."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Какие связанные записи сводит сводка по связи — как фильтр представления; без него — все."
           }
         }
       },
@@ -5426,6 +5961,17 @@
               "null"
             ],
             "description": "Её цвет по цвету представления; если его нет — без цвета."
+          },
+          "more": {
+            "type": "object",
+            "description": "Связи сверх тех, что несёт ячейка поля связи, по ключу поля: сколько их ещё; если нет — ячейки несут все связи.",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
           }
         }
       },
@@ -5867,6 +6413,13 @@
               "null"
             ],
             "description": "Новое описание."
+          },
+          "primary_field": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле, которое отныне называет записи, `fld_…`: поле этой таблицы того типа, что может их называть, — текст, число, дата, вариант, автономер, формула."
           }
         },
         "additionalProperties": false
@@ -5911,7 +6464,8 @@
         "type": "string",
         "description": "Для чего загружается файл.",
         "enum": [
-          "import"
+          "import",
+          "attachment"
         ]
       },
       "UploadedFile": {
@@ -5940,7 +6494,25 @@
           },
           "content_type": {
             "type": "string",
-            "description": "Его тип по первым байтам: `text/csv` или тип XLSX."
+            "description": "Его тип по первым байтам: для импорта — `text/csv` или тип XLSX."
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Ширина изображения в пикселях — как оно показывается.",
+            "minimum": 0
+          },
+          "height": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Высота изображения в пикселях — как оно показывается.",
+            "minimum": 0
           }
         }
       },
