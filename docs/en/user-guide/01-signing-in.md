@@ -1,7 +1,7 @@
 ---
 title: "Signing in"
 description: "Your first letter from xtab is an invitation with a link. Open the link, enter your name, make up a password of at least 12 characters and click Join. The link works once."
-version: "v0.3.0"
+version: "v0.4.0"
 lang: "en"
 order: 1
 ---

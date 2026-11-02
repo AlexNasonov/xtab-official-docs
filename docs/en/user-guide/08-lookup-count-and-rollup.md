@@ -1,7 +1,7 @@
 ---
 title: "Lookup, count and rollup"
 description: "These fields take data from linked records and update themselves when the linked records change."
-version: "v0.3.0"
+version: "v0.4.0"
 lang: "en"
 order: 8
 ---

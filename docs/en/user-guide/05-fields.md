@@ -1,7 +1,7 @@
 ---
 title: "Fields"
 description: "Every field has a type, and its icon is shown in the column header."
-version: "v0.3.0"
+version: "v0.4.0"
 lang: "en"
 order: 5
 ---

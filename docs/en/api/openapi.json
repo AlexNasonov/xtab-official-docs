@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "servers": [
     {
@@ -1635,6 +1635,980 @@
         }
       }
     },
+    "/org/groups": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Groups of the organization; every member sees them.",
+        "operationId": "list_groups",
+        "responses": {
+          "200": {
+            "description": "The groups, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Create a group (administrator of the organization). Its name is unique in the organization\nwhatever the case.",
+        "operationId": "create_group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name, or another group has it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Delete a group with its roles (administrator of the organization): its members lose the\naccess it gave them at once.",
+        "operationId": "delete_group",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Rename a group (administrator of the organization).",
+        "operationId": "rename_group",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name, or another group has it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}/members": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Members of a group, by name; every member of the organization sees them.",
+        "operationId": "list_members",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Add an account to a group (administrator of the organization): it gets the roles of the\ngroup. An administrator adding themselves to a group that holds roles confirms the\npassword first (`step-up-required`).",
+        "operationId": "add_member",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMemberInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Added, or in the group already"
+          },
+          "403": {
+            "description": "forbidden: not an administrator; step-up-required: confirm the password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the group",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: no such member",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}/members/{user}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Take an account out of a group (administrator of the organization): it loses the roles\nof the group.",
+        "operationId": "remove_member",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Taken out"
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the group, or the account is not in it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/tokens": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "The tokens of the person of the session.",
+        "operationId": "my_tokens",
+        "responses": {
+          "200": {
+            "description": "Working tokens, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Issue a personal token. Needs the password confirmed just now (`POST /auth/step-up`);\nthe policy of the organization decides who may, for how long and with which permissions.\nThe value comes once, in this answer.",
+        "operationId": "issue_my_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Issued; `value` is shown only now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: the policy does not let this person issue tokens; step-up-required: confirm the password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, scopes, bases, end or addresses",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Revoke one's own token.",
+        "operationId": "revoke_my_token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/tokens": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Every working token of the organization, without values (administrator).",
+        "operationId": "all_tokens",
+        "responses": {
+          "200": {
+            "description": "Working tokens, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Revoke any token of the organization (administrator).",
+        "operationId": "revoke_any_token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Service accounts: an administrator sees all, a member of a responsible group those of\ntheir groups.",
+        "operationId": "list_service_accounts",
+        "responses": {
+          "200": {
+            "description": "Service accounts, by name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceAccount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Create a service account (administrator): active, it gets roles like a person and acts\nby its tokens only.",
+        "operationId": "create_service_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccount"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, group",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Delete a service account (administrator): its tokens are revoked and its roles taken\naway; the audit keeps what it did.",
+        "operationId": "delete_service_account",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Rename a service account, change its responsible group, block or unblock it\n(administrator). The tokens of a blocked account stop working until it is unblocked.",
+        "operationId": "change_service_account",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccount"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, group, status",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}/tokens": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "The working tokens of a service account (administrator, member of its group).",
+        "operationId": "service_tokens",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Working tokens, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Issue a token of a service account (administrator, member of its group), with the\npassword confirmed just now. The value comes once, in this answer.",
+        "operationId": "issue_service_token",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Issued; `value` is shown only now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "step-up-required: confirm the password",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "account-blocked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name, scopes, bases, end or addresses",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Revoke a token of a service account (administrator, member of its group).",
+        "operationId": "revoke_service_token",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/token-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "The policy of the organization on tokens; every member reads it to fill the form of a\ntoken.",
+        "operationId": "get_policy",
+        "responses": {
+          "200": {
+            "description": "The policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Change the policy of the organization on tokens (administrator). Tokens issued before\nkeep their terms.",
+        "operationId": "set_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: issuers, group, max_days",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "tags": [
@@ -1743,7 +2717,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GrantOut"
+                    "$ref": "#/components/schemas/Grant"
                   }
                 }
               }
@@ -1794,7 +2768,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrantOut"
+                  "$ref": "#/components/schemas/Grant"
                 }
               }
             }
@@ -1850,7 +2824,7 @@
           {
             "name": "principal",
             "in": "path",
-            "description": "`usr_…`.",
+            "description": "`usr_…` of a person or `grp_…` of a group.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1899,7 +2873,7 @@
         "tags": [
           "members"
         ],
-        "summary": "Personal roles on a base (not those it inherits from its workspace).",
+        "summary": "Roles that give access to a base: its own and those of its workspace, each with where it\nis given; every member of the base sees them.",
         "operationId": "base_grants",
         "parameters": [
           {
@@ -1920,7 +2894,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GrantOut"
+                    "$ref": "#/components/schemas/Grant"
                   }
                 }
               }
@@ -1971,7 +2945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrantOut"
+                  "$ref": "#/components/schemas/Grant"
                 }
               }
             }
@@ -2027,7 +3001,7 @@
           {
             "name": "principal",
             "in": "path",
-            "description": "`usr_…`.",
+            "description": "`usr_…` of a person or `grp_…` of a group.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2903,6 +3877,628 @@
           },
           "422": {
             "description": "validation-failed: `records[i]` not found or repeated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/move": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Move records in the manual order of the table: right before or after a record, or to the\nend (editor of the base). Their values do not change; a view with a sort keeps its order.",
+        "operationId": "move_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` or `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` writes numbers as strings.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The moved records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` not found or repeated, `before` with `after`, the place is a moved record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/submit": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Send a form (editor of the base): its answers become a new record of its table. Only\nthe questions of the form are taken — those shown by their conditions, the required\nones answered.",
+        "operationId": "submit_form",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` of the type `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormAnswers"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record made and the message of the form",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSent"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: not a form; values by `fields.<key>`: `not-in-form`, `required`, `hidden-question`, errors of values",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/submit": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Send a public form: anyone with its link. The task of the proof-of-work given by\nthe form must be answered, once; the sendings of a form and of an address are limited;\nthe record is by nobody, written with the rights of who made the link.",
+        "operationId": "submit_public",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "The token of the public link",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAnswers"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sent: what the person reads now",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such link, or revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `task` not answered, expired or spent, sent too fast; values as in a form",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/public-link": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "The link of a form view (who manages the views of the base): whether it works, when and\nby whom it was made; its token is not kept.",
+        "operationId": "link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` of the type `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLink"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Make the public link of a form view (who manages the views of the base); a link it had\nstops. The token is in this answer only.",
+        "operationId": "make_link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` of the type `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The new link with its token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLink"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the view is not a form",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Revoke the public link of a form view (who manages the views of the base).",
+        "operationId": "drop_link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` of the type `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked, or there was none"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "The form of a public link: its title, its description and its questions — anyone with\nthe link.",
+        "operationId": "public_form",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "The token of the public link",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The form",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicForm"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such link, or revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/task": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "A task of the proof-of-work for one sending of a public form; an address that asks for\nmany gets harder ones.",
+        "operationId": "task",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "The token of the public link",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTask"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such link, or revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/uploads": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Start an upload of a file for a question of a public form about files, with the answer of\nthe task of the sending: up to 10 MB, five files a sending. The bytes follow by\n`PUT /public/forms/{token}/uploads/{upload}`.",
+        "operationId": "public_upload",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "The token of the public link",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The upload and its file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such link, or revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name, the size, the question, or the task",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited: five files a sending",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/uploads/{upload}": {
+      "put": {
+        "tags": [
+          "public"
+        ],
+        "summary": "The bytes of an upload of a public form (`application/octet-stream`): kept with the type\nfound by their first bytes, as any attachment.",
+        "operationId": "public_bytes",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "The token of the public link",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "upload",
+            "in": "path",
+            "description": "`upl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedFile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such link or upload",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "too-large",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4086,6 +5682,10 @@
               "$ref": "#/components/schemas/Table"
             },
             "description": "Its tables with their fields and shared views."
+          },
+          "role": {
+            "type": "string",
+            "description": "The role of the user in the base: the highest of their roles in it and in its\nworkspace."
           }
         }
       },
@@ -4622,7 +6222,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`single_line_text`, `long_text`, `email`, `url`, `phone_number`, `number`, `currency`,\n`percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`,\n`user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`,\n`autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`,\n`formula`, `lookup`, `count`, `rollup`."
+            "description": "`single_line_text`, `long_text`, `rich_text`, `email`, `url`, `phone_number`, `number`, `currency`,\n`percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`,\n`user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`,\n`autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`,\n`formula`, `lookup`, `count`, `rollup`."
           },
           "description": {
             "type": "string",
@@ -4697,6 +6297,93 @@
           }
         ],
         "description": "A node of a filter as the API carries it."
+      },
+      "FormAnswers": {
+        "type": "object",
+        "description": "The answers of a form: one new record of its table.",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Values of the questions by `fld_…` or name, as in a new record."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormInput": {
+        "type": "object",
+        "description": "A form: its title, its description, its questions and the message after sending.",
+        "properties": {
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Above the form, up to 200 characters; the name of the view without it."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Under the title, up to 2000 characters."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the person reads after sending, up to 2000 characters."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionInput"
+            },
+            "description": "The questions in their order, up to 100: fields of the table a person may write."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSent": {
+        "type": "object",
+        "description": "A form sent.",
+        "required": [
+          "record",
+          "message"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…` of the new record."
+          },
+          "message": {
+            "type": "string",
+            "description": "What the person reads now: the message of the form, or a standard thanks."
+          }
+        }
+      },
+      "FormTask": {
+        "type": "object",
+        "description": "A task of the proof-of-work of a public form: a counter whose SHA-256 together with the\ntask begins with `difficulty` zero bits answers it.",
+        "required": [
+          "task",
+          "difficulty"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "The task, as it is hashed: its UTF-8 bytes, then the counter as 8 bytes, little\nendian."
+          },
+          "difficulty": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Zero bits at the start of the hash.",
+            "minimum": 0
+          }
+        }
       },
       "FormulaPreview": {
         "type": "object",
@@ -4808,17 +6495,66 @@
           }
         }
       },
+      "Grant": {
+        "type": "object",
+        "description": "A role that gives access to a workspace or a base: of a person or of a group.",
+        "required": [
+          "role",
+          "scope"
+        ],
+        "properties": {
+          "user": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User",
+                "description": "The person; absent for a role of a group."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Group",
+                "description": "The group; absent for a role of a person."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "type": "string",
+            "description": "The role."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Where the role is given: `workspace` or `base`. The roles of a base list those of\nits workspace as well — they hold in every base of it; the effective role of a\nperson is the highest of theirs. A role of the workspace is changed on the workspace."
+          }
+        }
+      },
       "GrantInput": {
         "type": "object",
-        "description": "A role to give or change.",
+        "description": "A role to give or change: to a person or to a group, one of the two.",
         "required": [
-          "user",
           "role"
         ],
         "properties": {
           "user": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "`usr_…`."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`grp_…`."
           },
           "role": {
             "type": "string",
@@ -4827,21 +6563,27 @@
         },
         "additionalProperties": false
       },
-      "GrantOut": {
+      "Group": {
         "type": "object",
-        "description": "A personal role on a workspace or a base.",
+        "description": "A group of users: it passes its roles to its members.",
         "required": [
-          "user",
-          "role"
+          "id",
+          "name",
+          "members"
         ],
         "properties": {
-          "user": {
-            "$ref": "#/components/schemas/User",
-            "description": "The person."
-          },
-          "role": {
+          "id": {
             "type": "string",
-            "description": "The role."
+            "description": "`grp_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name, unique in the organization whatever the case."
+          },
+          "members": {
+            "type": "integer",
+            "format": "int64",
+            "description": "How many accounts are in it."
           }
         }
       },
@@ -4878,6 +6620,34 @@
             "description": "Summaries by `fld_…` or name: counts and numbers as numbers, percents with one\ndecimal place, dates as text; `null` — nothing to sum up."
           }
         }
+      },
+      "GroupInput": {
+        "type": "object",
+        "description": "The name of a new or renamed group.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 200 characters; spaces around it are dropped."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GroupMemberInput": {
+        "type": "object",
+        "description": "An account to add to a group.",
+        "required": [
+          "user"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "`usr_…`."
+          }
+        },
+        "additionalProperties": false
       },
       "Groups": {
         "type": "object",
@@ -5211,6 +6981,24 @@
           }
         }
       },
+      "IssuedToken": {
+        "type": "object",
+        "description": "A token just issued, with its value: shown once, the server keeps only its hash.",
+        "required": [
+          "token",
+          "value"
+        ],
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/Token",
+            "description": "The token."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value, `xtab_…`: the header `Authorization: Bearer <value>`."
+          }
+        }
+      },
       "LoginBody": {
         "type": "object",
         "description": "Login with e-mail and password.",
@@ -5285,6 +7073,37 @@
               "null"
             ],
             "description": "The language of the interface: `ru`, `en`, or `null` for the one of the browser."
+          }
+        },
+        "additionalProperties": false
+      },
+      "MoveRecords": {
+        "type": "object",
+        "description": "Records moved in the manual order of their table: right before or after a record, or to\nthe end — the order of a stack of a kanban without a sort.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…`, up to 1000: they stand one after another in this order at their new place."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the same table, not moved itself: the records go right before it. Without\n`before` and `after` — at the end."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the same table, not moved itself: the records go right after it; not with\n`before`."
           }
         },
         "additionalProperties": false
@@ -5915,6 +7734,236 @@
           }
         }
       },
+      "PublicAnswers": {
+        "type": "object",
+        "description": "The answers of a public form with the answer of its task.",
+        "required": [
+          "fields",
+          "task",
+          "counter"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Values of the questions by `fld_…`, as in a new record."
+          },
+          "task": {
+            "type": "string",
+            "description": "The task given for this sending."
+          },
+          "counter": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The counter that answers it.",
+            "minimum": 0
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A field no person sees: whatever fills it is taken for a robot."
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicForm": {
+        "type": "object",
+        "description": "A form as its public link shows it to anyone.",
+        "required": [
+          "title",
+          "questions"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Above the form."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Under the title."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicQuestion"
+            },
+            "description": "The questions in their order."
+          }
+        }
+      },
+      "PublicLink": {
+        "type": "object",
+        "description": "The public link of a form view: anyone with it sends the form.",
+        "required": [
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "The view has a working link."
+          },
+          "token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The token of the link, only in the answer that made it: the link is `#/f/<token>` of\nthe address of the service. It is not kept and is not shown again."
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the link was made, RFC 3339."
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who made it, `usr_…`: the link acts with their rights."
+          }
+        }
+      },
+      "PublicQuestion": {
+        "type": "object",
+        "description": "A question of a public form: its field — type and settings, no description — and how\nit is asked.",
+        "required": [
+          "field",
+          "label",
+          "required"
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/Field",
+            "description": "The field answered."
+          },
+          "label": {
+            "type": "string",
+            "description": "The wording: of the question, or the name of the field."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A hint under the question."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "An answer is needed while the question is shown."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Shown only while an earlier answer meets this."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicSent": {
+        "type": "object",
+        "description": "A public form sent.",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "What the person reads now: the message of the form, or a standard thanks."
+          }
+        }
+      },
+      "PublicUpload": {
+        "type": "object",
+        "description": "A file for a question of a public form, asked with the answer of the task of the sending:\nthe bytes follow by `PUT /public/forms/{token}/uploads/{upload}`.",
+        "required": [
+          "name",
+          "size",
+          "field",
+          "task",
+          "counter"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Its size in bytes, up to 10 MB.",
+            "minimum": 0
+          },
+          "field": {
+            "type": "string",
+            "description": "`fld_…` of a question about files."
+          },
+          "task": {
+            "type": "string",
+            "description": "The task given for this sending."
+          },
+          "counter": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The counter that answers it.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuestionInput": {
+        "type": "object",
+        "description": "A question of a form.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` of the table."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "An answer is needed while the question is shown."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The wording instead of the name of the field, up to 500 characters."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A hint under the question, up to 500 characters."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Shown only while an earlier answer meets this."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "Record": {
         "type": "object",
         "description": "A record.",
@@ -6264,6 +8313,139 @@
         },
         "additionalProperties": false
       },
+      "ServiceAccount": {
+        "type": "object",
+        "description": "An account of an integration: no password, no sessions, it acts by its tokens only.",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "tokens"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`: it gets roles in workspaces and bases as a person does."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name, e.g. «1C integration»."
+          },
+          "status": {
+            "type": "string",
+            "description": "`active` or `blocked`."
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Group",
+                "description": "The group whose members issue its tokens; absent — the administrators only."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "How many of its tokens work."
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When one of its tokens was used last, RFC 3339."
+          }
+        }
+      },
+      "ServiceAccountInput": {
+        "type": "object",
+        "description": "A new service account.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name, 1 to 200 characters."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`grp_…` whose members issue its tokens."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServiceAccountPatch": {
+        "type": "object",
+        "description": "A change of a service account; what is absent stays.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A new name."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A new responsible group, `grp_…`; an empty text — none."
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`active` or `blocked`: a blocked account's tokens stop working."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShownInput": {
+        "type": "object",
+        "description": "When a question is shown: an earlier question and what its answer is.",
+        "required": [
+          "field",
+          "op"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` of an earlier question."
+          },
+          "op": {
+            "$ref": "#/components/schemas/ShownOp",
+            "description": "`is`, `is_not`, `has`, `is_empty` or `is_not_empty`."
+          },
+          "value": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "`opt_…` or the name of a choice, `true` or `false` for a checkbox, a text; none for\n`is_empty` and `is_not_empty`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShownOp": {
+        "type": "string",
+        "description": "How the answer of a condition is compared.",
+        "enum": [
+          "is",
+          "is_not",
+          "has",
+          "is_empty",
+          "is_not_empty"
+        ]
+      },
       "SortInput": {
         "type": "object",
         "description": "A key of a sort as the API carries it.",
@@ -6420,6 +8602,174 @@
               "null"
             ],
             "description": "The field that names the records from now on, `fld_…`: a field of the table of a type\nthat may name them — a text, a number, a date, a choice, an autonumber, a formula."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Token": {
+        "type": "object",
+        "description": "A token, without its value: that is shown once, when it is issued.",
+        "required": [
+          "id",
+          "name",
+          "hint",
+          "scopes",
+          "owner",
+          "owner_name",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tok_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "What it is for."
+          },
+          "hint": {
+            "type": "string",
+            "description": "The last four characters of its value, to tell it apart."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its permissions."
+          },
+          "bases": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Its bases, `bas_…`; absent — every base of its owner."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Addresses or networks it is accepted from; empty — any."
+          },
+          "owner": {
+            "type": "string",
+            "description": "The account it acts as, `usr_…`."
+          },
+          "owner_name": {
+            "type": "string",
+            "description": "The name of that account."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was issued, RFC 3339."
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it stops working, RFC 3339; absent — never."
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it was used last, RFC 3339; absent — never."
+          }
+        }
+      },
+      "TokenInput": {
+        "type": "object",
+        "description": "A token to issue.",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "What the token is for, 1 to 200 characters."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its permissions: `data.records:read`, `data.records:write`, `data.records:export`,\n`schema.bases:read`, `schema.bases:write`, `access.grants:read`,\n`access.grants:write`, `automations:read`, `automations:write`."
+          },
+          "bases": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The bases it works in, `bas_…`; absent — every base of its owner."
+          },
+          "expires_in_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Days until it stops working; absent — never, where the policy of the organization\nallows it.",
+            "minimum": 0
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Addresses or networks (CIDR) it is accepted from; empty — any."
+          }
+        },
+        "additionalProperties": false
+      },
+      "TokenPolicyBody": {
+        "type": "object",
+        "description": "The policy of the organization on tokens.",
+        "required": [
+          "issuers",
+          "max_days",
+          "expiry_required",
+          "sensitive_service_only",
+          "service_addresses_required"
+        ],
+        "properties": {
+          "issuers": {
+            "type": "string",
+            "description": "Who issues personal tokens: `everyone`, `group` or `admins`."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The group of `issuers = group`, `grp_…`."
+          },
+          "max_days": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The longest life of a token, in days, 1 to 3650.",
+            "minimum": 0
+          },
+          "expiry_required": {
+            "type": "boolean",
+            "description": "Every token has an end."
+          },
+          "sensitive_service_only": {
+            "type": "boolean",
+            "description": "Sensitive permissions (`access.grants:write`, `automations:write`,\n`data.records:export`) only on tokens of service accounts."
+          },
+          "service_addresses_required": {
+            "type": "boolean",
+            "description": "Tokens of service accounts are limited to addresses."
           }
         },
         "additionalProperties": false
@@ -6688,6 +9038,31 @@
                 "type": "null"
               }
             ]
+          },
+          "stack": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The field whose values are the stacks of a kanban (`fld_…`): a single select or a\nuser."
+          },
+          "cover": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The field of attachments whose first image covers the cards of a kanban (`fld_…`)."
+          },
+          "form": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FormInput",
+                "description": "The questions of a form and what it says."
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -6705,7 +9080,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`grid` — the only type of v0.2."
+            "description": "`grid`, `kanban` or `form`."
           },
           "from": {
             "type": [
@@ -6765,6 +9140,13 @@
               "$ref": "#/components/schemas/BaseRef"
             },
             "description": "Its bases visible to the user, by name."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The role of the user in the workspace itself: `reader`, `commenter`, `editor`,\n`creator` or `owner`; absent when only some of its bases are shared with them."
           }
         }
       }
@@ -6775,12 +9157,20 @@
         "in": "cookie",
         "name": "__Host-xtab_session",
         "description": "Session of the browser; changing requests also carry `X-Xtab-Request: 1`"
+      },
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API token `xtab_…` of a person or a service account, issued in the interface. A token acts with the rights of its owner, narrowed by its permissions, bases and addresses; a missing permission answers `403 insufficient-scope`. Requests are limited in rate: `429 rate-limited` with `Retry-After`, the headers `RateLimit-Policy` and `RateLimit`."
       }
     }
   },
   "security": [
     {
       "session": []
+    },
+    {
+      "token": []
     }
   ],
   "tags": [

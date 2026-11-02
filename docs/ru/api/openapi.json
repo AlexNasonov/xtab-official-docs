@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "servers": [
     {
@@ -1635,6 +1635,980 @@
         }
       }
     },
+    "/org/groups": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Группы организации; их видит каждый участник.",
+        "operationId": "list_groups",
+        "responses": {
+          "200": {
+            "description": "Группы по названию",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Group"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Создать группу (администратор организации). Название уникально в организации без учёта регистра.",
+        "operationId": "create_group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Создано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, или оно у другой группы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Удалить группу вместе с её ролями (администратор организации): участники сразу теряют доступ, полученный через неё.",
+        "operationId": "delete_group",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Переименовать группу (администратор организации).",
+        "operationId": "rename_group",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Переименовано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, или оно у другой группы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}/members": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Участники группы по имени; их видит каждый участник организации.",
+        "operationId": "list_members",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Участники",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Добавить учётную запись в группу (администратор организации): она получает роли группы. Администратор, добавляющий себя в группу с ролями, сначала подтверждает пароль (`step-up-required`).",
+        "operationId": "add_member",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMemberInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Добавлена или уже в группе"
+          },
+          "403": {
+            "description": "forbidden: не администратор; step-up-required: подтвердите пароль",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: группа",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: нет такого участника",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/groups/{group}/members/{user}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Убрать учётную запись из группы (администратор организации): она теряет роли группы.",
+        "operationId": "remove_member",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "description": "`grp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Убрана"
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: группа, или учётной записи в ней нет",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/tokens": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Токены человека, открывшего сессию.",
+        "operationId": "my_tokens",
+        "responses": {
+          "200": {
+            "description": "Действующие токены, новые первыми",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Выпустить личный токен. Нужен только что подтверждённый пароль (`POST /auth/step-up`); политика организации определяет, кто может, на какой срок и с какими разрешениями. Значение приходит один раз, в этом ответе.",
+        "operationId": "issue_my_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Выпущен; `value` показывается только сейчас",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: политика не разрешает этому человеку выпускать токены; step-up-required: подтвердите пароль",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, разрешения, базы, срок или адреса",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Отозвать свой токен.",
+        "operationId": "revoke_my_token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозван"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/tokens": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Все действующие токены организации без значений (администратор).",
+        "operationId": "all_tokens",
+        "responses": {
+          "200": {
+            "description": "Действующие токены, новые первыми",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Отозвать любой токен организации (администратор).",
+        "operationId": "revoke_any_token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозван"
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Служебные учётные записи: администратор видит все, участник ответственной группы — записи своих групп.",
+        "operationId": "list_service_accounts",
+        "responses": {
+          "200": {
+            "description": "Служебные учётные записи по названию",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceAccount"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Создать служебную учётную запись (администратор): активна, получает роли как человек и действует только своими токенами.",
+        "operationId": "create_service_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Создано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccount"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, группа",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Удалить служебную учётную запись (администратор): её токены отзываются, роли снимаются; аудит сохраняет её действия.",
+        "operationId": "delete_service_account",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Переименовать служебную учётную запись, сменить ответственную группу, заблокировать или разблокировать (администратор). Токены заблокированной записи не действуют до разблокировки.",
+        "operationId": "change_service_account",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceAccountPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccount"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, группа, состояние",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}/tokens": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Действующие токены служебной учётной записи (администратор, участник её группы).",
+        "operationId": "service_tokens",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Действующие токены, новые первыми",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Token"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Выпустить токен служебной учётной записи (администратор, участник её группы) с только что подтверждённым паролем. Значение приходит один раз, в этом ответе.",
+        "operationId": "issue_service_token",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Выпущен; `value` показывается только сейчас",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedToken"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "step-up-required: подтвердите пароль",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "account-blocked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, разрешения, базы, срок или адреса",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/service-accounts/{account}/tokens/{token}": {
+      "delete": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Отозвать токен служебной учётной записи (администратор, участник её группы).",
+        "operationId": "revoke_service_token",
+        "parameters": [
+          {
+            "name": "account",
+            "in": "path",
+            "description": "`usr_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "description": "`tok_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозван"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/token-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Политика организации по токенам; её читает каждый участник, чтобы заполнить форму токена.",
+        "operationId": "get_policy",
+        "responses": {
+          "200": {
+            "description": "Политика",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Изменить политику организации по токенам (администратор). Ранее выпущенные токены сохраняют свои условия.",
+        "operationId": "set_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: issuers, group, max_days",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "tags": [
@@ -1743,7 +2717,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GrantOut"
+                    "$ref": "#/components/schemas/Grant"
                   }
                 }
               }
@@ -1794,7 +2768,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrantOut"
+                  "$ref": "#/components/schemas/Grant"
                 }
               }
             }
@@ -1850,7 +2824,7 @@
           {
             "name": "principal",
             "in": "path",
-            "description": "`usr_…`.",
+            "description": "`usr_…` человека или `grp_…` группы.",
             "required": true,
             "schema": {
               "type": "string"
@@ -1899,7 +2873,7 @@
         "tags": [
           "members"
         ],
-        "summary": "Личные роли в базе (без унаследованных от рабочего пространства).",
+        "summary": "Роли, дающие доступ к базе: её собственные и роли её рабочего пространства, у каждой указано, где она выдана; их видит каждый участник базы.",
         "operationId": "base_grants",
         "parameters": [
           {
@@ -1920,7 +2894,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GrantOut"
+                    "$ref": "#/components/schemas/Grant"
                   }
                 }
               }
@@ -1971,7 +2945,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrantOut"
+                  "$ref": "#/components/schemas/Grant"
                 }
               }
             }
@@ -2027,7 +3001,7 @@
           {
             "name": "principal",
             "in": "path",
-            "description": "`usr_…`.",
+            "description": "`usr_…` человека или `grp_…` группы.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2903,6 +3877,628 @@
           },
           "422": {
             "description": "validation-failed: `records[i]` не найдена или повторяется",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/records/move": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Переместить записи в ручном порядке таблицы: прямо перед записью или после неё, или в конец (редактор базы). Значения записей не меняются; представление с сортировкой сохраняет свой порядок.",
+        "operationId": "move_records",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "path",
+            "description": "`id` или `name`.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "path",
+            "description": "`string` записывает числа строками.",
+            "required": true,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Перемещённые записи",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` не найдена или повторяется, `before` вместе с `after`, место — перемещаемая запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/submit": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Отправить форму (редактор базы): ответы становятся новой записью её таблицы. Принимаются только вопросы формы — показанные по своим условиям, обязательные — с ответом.",
+        "operationId": "submit_form",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` типа `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormAnswers"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Созданная запись и сообщение формы",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSent"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: не форма; значения по `fields.<ключ>`: `not-in-form`, `required`, `hidden-question`, ошибки значений",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/submit": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Отправить публичную форму: любой, у кого есть ссылка. Задача proof-of-work, выданная формой, должна быть решена, один раз; отправки формы и с одного адреса ограничены; запись без автора, записывается с правами того, кто создал ссылку.",
+        "operationId": "submit_public",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Токен публичной ссылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAnswers"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Отправлено: что человек видит сейчас",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой ссылки нет или она отозвана",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `task` не решена, устарела или использована, отправка слишком быстрая; значения — как в форме",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/views/{view}/public-link": {
+      "get": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Ссылка представления-формы (кто управляет представлениями базы): работает ли, когда и кем создана; её токен не хранится.",
+        "operationId": "link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` типа `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ссылка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLink"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Создать публичную ссылку представления-формы (кто управляет представлениями базы); прежняя ссылка перестаёт работать. Токен — только в этом ответе.",
+        "operationId": "make_link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` типа `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Новая ссылка с её токеном",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicLink"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: представление — не форма",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Отозвать публичную ссылку представления-формы (кто управляет представлениями базы).",
+        "operationId": "drop_link",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "path",
+            "description": "`viw_…` типа `form`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отозвана, или её не было"
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Форма публичной ссылки: заголовок, описание и вопросы — любой, у кого есть ссылка.",
+        "operationId": "public_form",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Токен публичной ссылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Форма",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicForm"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой ссылки нет или она отозвана",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/task": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Задача proof-of-work для одной отправки публичной формы; адрес, который просит много задач, получает более трудные.",
+        "operationId": "task",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Токен публичной ссылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Задача",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormTask"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой ссылки нет или она отозвана",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/uploads": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Начать загрузку файла для вопроса публичной формы о файлах с ответом\nзадачи отправки: до 10 МБ, пять файлов на отправку. Байты следуют запросом\n`PUT /public/forms/{token}/uploads/{upload}`.",
+        "operationId": "public_upload",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Токен публичной ссылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Загрузка и её файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Upload"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой ссылки нет или она отозвана",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: имя, размер, вопрос или задача",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited: пять файлов на отправку",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/forms/{token}/uploads/{upload}": {
+      "put": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Байты загрузки публичной формы (`application/octet-stream`): сохраняются с типом,\nопределённым по первым байтам, как у любого вложения.",
+        "operationId": "public_bytes",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "description": "Токен публичной ссылки",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "upload",
+            "in": "path",
+            "description": "`upl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Файл",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedFile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: такой ссылки или загрузки нет",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "too-large",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4086,6 +5682,10 @@
               "$ref": "#/components/schemas/Table"
             },
             "description": "Её таблицы с полями и общими представлениями."
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль пользователя в базе: старшая из его ролей в ней и в её рабочем пространстве."
           }
         }
       },
@@ -4622,7 +6222,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`single_line_text`, `long_text`, `email`, `url`, `phone_number`, `number`, `currency`, `percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`, `user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`, `formula`, `lookup`, `count`, `rollup`."
+            "description": "`single_line_text`, `long_text`, `rich_text`, `email`, `url`, `phone_number`, `number`, `currency`, `percent`, `duration`, `rating`, `checkbox`, `single_select`, `multiple_selects`, `user`, `multiple_users`, `link`, `multiple_attachments`, `date`, `date_time`, `autonumber`, `created_time`, `last_modified_time`, `created_by`, `last_modified_by`, `formula`, `lookup`, `count`, `rollup`."
           },
           "description": {
             "type": "string",
@@ -4697,6 +6297,93 @@
           }
         ],
         "description": "Узел фильтра в API."
+      },
+      "FormAnswers": {
+        "type": "object",
+        "description": "Ответы формы: одна новая запись её таблицы.",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Значения вопросов по `fld_…` или названию, как у новой записи."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormInput": {
+        "type": "object",
+        "description": "Форма: заголовок, описание, вопросы и сообщение после отправки.",
+        "properties": {
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Над формой, до 200 символов; без него — название представления."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Под заголовком, до 2000 символов."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Что человек видит после отправки, до 2000 символов."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionInput"
+            },
+            "description": "Вопросы по порядку, до 100: поля таблицы, которые заполняет человек."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSent": {
+        "type": "object",
+        "description": "Отправленная форма.",
+        "required": [
+          "record",
+          "message"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…` новой записи."
+          },
+          "message": {
+            "type": "string",
+            "description": "Что человек видит сейчас: сообщение формы или стандартная благодарность."
+          }
+        }
+      },
+      "FormTask": {
+        "type": "object",
+        "description": "Задача proof-of-work публичной формы: ответ — счётчик, SHA-256 которого вместе с задачей начинается с `difficulty` нулевых бит.",
+        "required": [
+          "task",
+          "difficulty"
+        ],
+        "properties": {
+          "task": {
+            "type": "string",
+            "description": "Задача в том виде, в каком хешируется: её байты UTF-8, затем счётчик — 8 байт, младший первым."
+          },
+          "difficulty": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Нулевых бит в начале хеша.",
+            "minimum": 0
+          }
+        }
       },
       "FormulaPreview": {
         "type": "object",
@@ -4808,17 +6495,66 @@
           }
         }
       },
+      "Grant": {
+        "type": "object",
+        "description": "Роль, дающая доступ к рабочему пространству или базе: человека или группы.",
+        "required": [
+          "role",
+          "scope"
+        ],
+        "properties": {
+          "user": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/User",
+                "description": "Человек; нет у роли группы."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Group",
+                "description": "Группа; нет у роли человека."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "type": "string",
+            "description": "Роль."
+          },
+          "scope": {
+            "type": "string",
+            "description": "Где выдана роль: `workspace` или `base`. Среди ролей базы есть и роли её рабочего пространства — они действуют во всех его базах; действующая роль человека — старшая из его ролей. Роль в рабочем пространстве меняется в рабочем пространстве."
+          }
+        }
+      },
       "GrantInput": {
         "type": "object",
-        "description": "Выдаваемая или изменяемая роль.",
+        "description": "Роль, которую выдают или меняют: человеку или группе — что-то одно.",
         "required": [
-          "user",
           "role"
         ],
         "properties": {
           "user": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "`usr_…`."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`grp_…`."
           },
           "role": {
             "type": "string",
@@ -4827,21 +6563,27 @@
         },
         "additionalProperties": false
       },
-      "GrantOut": {
+      "Group": {
         "type": "object",
-        "description": "Личная роль в рабочем пространстве или базе.",
+        "description": "Группа пользователей: передаёт свои роли участникам.",
         "required": [
-          "user",
-          "role"
+          "id",
+          "name",
+          "members"
         ],
         "properties": {
-          "user": {
-            "$ref": "#/components/schemas/User",
-            "description": "Человек."
-          },
-          "role": {
+          "id": {
             "type": "string",
-            "description": "Роль."
+            "description": "`grp_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название, уникальное в организации без учёта регистра."
+          },
+          "members": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько в ней учётных записей."
           }
         }
       },
@@ -4878,6 +6620,34 @@
             "description": "Итоги по `fld_…` или названию: количества и числа — числами, проценты — с одним знаком после запятой, даты — текстом; `null` — нечего подытоживать."
           }
         }
+      },
+      "GroupInput": {
+        "type": "object",
+        "description": "Название новой или переименованной группы.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "От 1 до 200 символов; пробелы по краям отбрасываются."
+          }
+        },
+        "additionalProperties": false
+      },
+      "GroupMemberInput": {
+        "type": "object",
+        "description": "Учётная запись, которую добавляют в группу.",
+        "required": [
+          "user"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "`usr_…`."
+          }
+        },
+        "additionalProperties": false
       },
       "Groups": {
         "type": "object",
@@ -5211,6 +6981,24 @@
           }
         }
       },
+      "IssuedToken": {
+        "type": "object",
+        "description": "Только что выпущенный токен со значением: показывается один раз, сервер хранит только хеш.",
+        "required": [
+          "token",
+          "value"
+        ],
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/Token",
+            "description": "Токен."
+          },
+          "value": {
+            "type": "string",
+            "description": "Его значение, `xtab_…`: заголовок `Authorization: Bearer <значение>`."
+          }
+        }
+      },
       "LoginBody": {
         "type": "object",
         "description": "Вход по e-mail и паролю.",
@@ -5285,6 +7073,37 @@
               "null"
             ],
             "description": "Язык интерфейса: `ru`, `en` или `null` — язык браузера."
+          }
+        },
+        "additionalProperties": false
+      },
+      "MoveRecords": {
+        "type": "object",
+        "description": "Записи, перемещаемые в ручном порядке таблицы: прямо перед записью или после неё, или в конец — порядок колонки канбана без сортировки.",
+        "required": [
+          "records"
+        ],
+        "properties": {
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…`, до 1000: на новом месте они стоят одна за другой в этом порядке."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` той же таблицы, который сам не перемещается: записи встают прямо перед ним. Без `before` и `after` — в конец."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` той же таблицы, который сам не перемещается: записи встают сразу после него; не вместе с `before`."
           }
         },
         "additionalProperties": false
@@ -5915,6 +7734,236 @@
           }
         }
       },
+      "PublicAnswers": {
+        "type": "object",
+        "description": "Ответы публичной формы с ответом на её задачу.",
+        "required": [
+          "fields",
+          "task",
+          "counter"
+        ],
+        "properties": {
+          "fields": {
+            "type": "object",
+            "description": "Значения вопросов по `fld_…`, как у новой записи."
+          },
+          "task": {
+            "type": "string",
+            "description": "Задача, выданная для этой отправки."
+          },
+          "counter": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Счётчик, который её решает.",
+            "minimum": 0
+          },
+          "website": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле, которого человек не видит: всё, что его заполняет, считается роботом."
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicForm": {
+        "type": "object",
+        "description": "Форма, как её показывает публичная ссылка любому.",
+        "required": [
+          "title",
+          "questions"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Над формой."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Под заголовком."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicQuestion"
+            },
+            "description": "Вопросы по порядку."
+          }
+        }
+      },
+      "PublicLink": {
+        "type": "object",
+        "description": "Публичная ссылка представления-формы: любой, у кого она есть, отправляет форму.",
+        "required": [
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "description": "У представления есть работающая ссылка."
+          },
+          "token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Токен ссылки, только в ответе, который её создал: ссылка — `#/f/<токен>` от адреса сервиса. Токен не хранится и больше не показывается."
+          },
+          "created_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда создана ссылка, RFC 3339."
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Кто её создал, `usr_…`: ссылка действует с его правами."
+          }
+        }
+      },
+      "PublicQuestion": {
+        "type": "object",
+        "description": "Вопрос публичной формы: его поле — тип и настройки, без описания — и как он задан.",
+        "required": [
+          "field",
+          "label",
+          "required"
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/Field",
+            "description": "Поле, на которое отвечают."
+          },
+          "label": {
+            "type": "string",
+            "description": "Формулировка: вопроса или название поля."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Подсказка под вопросом."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Ответ обязателен, пока вопрос показан."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Показывается, только пока предыдущий ответ отвечает этому условию."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PublicSent": {
+        "type": "object",
+        "description": "Отправленная публичная форма.",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Что человек видит сейчас: сообщение формы или стандартная благодарность."
+          }
+        }
+      },
+      "PublicUpload": {
+        "type": "object",
+        "description": "Файл для вопроса публичной формы, запрошенный с ответом задачи отправки:\nбайты следуют запросом `PUT /public/forms/{token}/uploads/{upload}`.",
+        "required": [
+          "name",
+          "size",
+          "field",
+          "task",
+          "counter"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Его имя."
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Его размер в байтах, до 10 МБ.",
+            "minimum": 0
+          },
+          "field": {
+            "type": "string",
+            "description": "`fld_…` вопроса о файлах."
+          },
+          "task": {
+            "type": "string",
+            "description": "Задача, выданная для этой отправки."
+          },
+          "counter": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Счётчик, который её решает.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuestionInput": {
+        "type": "object",
+        "description": "Вопрос формы.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` таблицы."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Ответ обязателен, пока вопрос показан."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Формулировка вместо названия поля, до 500 символов."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Подсказка под вопросом, до 500 символов."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Показывается, только пока предыдущий ответ отвечает этому условию."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "Record": {
         "type": "object",
         "description": "Запись.",
@@ -6264,6 +8313,139 @@
         },
         "additionalProperties": false
       },
+      "ServiceAccount": {
+        "type": "object",
+        "description": "Учётная запись интеграции: без пароля и сессий, действует только своими токенами.",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "tokens"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`: получает роли в рабочих пространствах и базах, как человек."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название, например «Интеграция с 1С»."
+          },
+          "status": {
+            "type": "string",
+            "description": "`active` или `blocked`."
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Group",
+                "description": "Группа, участники которой выпускают её токены; нет — только администраторы."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tokens": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько её токенов действует."
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда последний раз использован один из её токенов, RFC 3339."
+          }
+        }
+      },
+      "ServiceAccountInput": {
+        "type": "object",
+        "description": "Новая служебная учётная запись.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название, от 1 до 200 символов."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`grp_…`, участники которой выпускают её токены."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServiceAccountPatch": {
+        "type": "object",
+        "description": "Изменение служебной учётной записи; чего нет — остаётся как было.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новое название."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Новая ответственная группа, `grp_…`; пустой текст — без группы."
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`active` или `blocked`: токены заблокированной записи перестают действовать."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShownInput": {
+        "type": "object",
+        "description": "Когда вопрос показывается: предыдущий вопрос и каким должен быть его ответ.",
+        "required": [
+          "field",
+          "op"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` одного из предыдущих вопросов."
+          },
+          "op": {
+            "$ref": "#/components/schemas/ShownOp",
+            "description": "`is`, `is_not`, `has`, `is_empty` или `is_not_empty`."
+          },
+          "value": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "`opt_…` или название варианта выбора, `true` или `false` для флажка, текст; без значения — для `is_empty` и `is_not_empty`."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ShownOp": {
+        "type": "string",
+        "description": "Как сравнивается ответ в условии.",
+        "enum": [
+          "is",
+          "is_not",
+          "has",
+          "is_empty",
+          "is_not_empty"
+        ]
+      },
       "SortInput": {
         "type": "object",
         "description": "Ключ сортировки в API.",
@@ -6420,6 +8602,174 @@
               "null"
             ],
             "description": "Поле, которое отныне называет записи, `fld_…`: поле этой таблицы того типа, что может их называть, — текст, число, дата, вариант, автономер, формула."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Token": {
+        "type": "object",
+        "description": "Токен без значения: значение показывается один раз, при выпуске.",
+        "required": [
+          "id",
+          "name",
+          "hint",
+          "scopes",
+          "owner",
+          "owner_name",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tok_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Для чего он."
+          },
+          "hint": {
+            "type": "string",
+            "description": "Последние четыре знака значения — чтобы отличать токены."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Его разрешения."
+          },
+          "bases": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Его базы, `bas_…`; нет — все базы владельца."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Адреса или сети, с которых токен принимается; пусто — любые."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Учётная запись, от имени которой он действует, `usr_…`."
+          },
+          "owner_name": {
+            "type": "string",
+            "description": "Имя этой учётной записи."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда выпущен, RFC 3339."
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда перестанет действовать, RFC 3339; нет — никогда."
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда использован последний раз, RFC 3339; нет — ни разу."
+          }
+        }
+      },
+      "TokenInput": {
+        "type": "object",
+        "description": "Выпускаемый токен.",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Для чего токен, от 1 до 200 символов."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Его разрешения: `data.records:read`, `data.records:write`, `data.records:export`, `schema.bases:read`, `schema.bases:write`, `access.grants:read`, `access.grants:write`, `automations:read`, `automations:write`."
+          },
+          "bases": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Базы, в которых он работает, `bas_…`; нет — все базы владельца."
+          },
+          "expires_in_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Дней до окончания действия; нет — бессрочно, если это разрешает политика организации.",
+            "minimum": 0
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Адреса или сети (CIDR), с которых токен принимается; пусто — любые."
+          }
+        },
+        "additionalProperties": false
+      },
+      "TokenPolicyBody": {
+        "type": "object",
+        "description": "Политика организации по токенам.",
+        "required": [
+          "issuers",
+          "max_days",
+          "expiry_required",
+          "sensitive_service_only",
+          "service_addresses_required"
+        ],
+        "properties": {
+          "issuers": {
+            "type": "string",
+            "description": "Кто выпускает личные токены: `everyone`, `group` или `admins`."
+          },
+          "group": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Группа для `issuers = group`, `grp_…`."
+          },
+          "max_days": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Наибольший срок действия токена в днях, от 1 до 3650.",
+            "minimum": 0
+          },
+          "expiry_required": {
+            "type": "boolean",
+            "description": "У каждого токена есть срок действия."
+          },
+          "sensitive_service_only": {
+            "type": "boolean",
+            "description": "Чувствительные разрешения (`access.grants:write`, `automations:write`, `data.records:export`) — только у токенов служебных учётных записей."
+          },
+          "service_addresses_required": {
+            "type": "boolean",
+            "description": "Токены служебных учётных записей ограничены адресами."
           }
         },
         "additionalProperties": false
@@ -6688,6 +9038,31 @@
                 "type": "null"
               }
             ]
+          },
+          "stack": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле, значения которого — колонки канбана (`fld_…`): одиночный выбор или пользователь."
+          },
+          "cover": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поле вложений, первое изображение которого служит обложкой карточек канбана (`fld_…`)."
+          },
+          "form": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FormInput",
+                "description": "Вопросы формы и её тексты."
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -6705,7 +9080,7 @@
           },
           "type": {
             "type": "string",
-            "description": "`grid` — единственный тип в v0.2."
+            "description": "`grid`, `kanban` или `form`."
           },
           "from": {
             "type": [
@@ -6765,6 +9140,13 @@
               "$ref": "#/components/schemas/BaseRef"
             },
             "description": "Видимые пользователю базы, по названию."
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Роль пользователя в самом рабочем пространстве: `reader`, `commenter`, `editor`, `creator` или `owner`; нет, если пользователю открыты только некоторые его базы."
           }
         }
       }
@@ -6775,12 +9157,20 @@
         "in": "cookie",
         "name": "__Host-xtab_session",
         "description": "Сессия браузера; изменяющие запросы также передают `X-Xtab-Request: 1`"
+      },
+      "token": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API-токен `xtab_…` человека или служебной учётной записи, выпущенный в интерфейсе. Токен действует с правами владельца, суженными его разрешениями, базами и адресами; недостающее разрешение — ответ `403 insufficient-scope`. Частота запросов ограничена: `429 rate-limited` с `Retry-After`, заголовки `RateLimit-Policy` и `RateLimit`."
       }
     }
   },
   "security": [
     {
       "session": []
+    },
+    {
+      "token": []
     }
   ],
   "tags": [

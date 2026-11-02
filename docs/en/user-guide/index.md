@@ -1,12 +1,12 @@
 ---
 title: "xtab user guide"
 description: "How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back."
-version: "v0.3.0"
+version: "v0.4.0"
 lang: "en"
 order: 0
 ---
 
-How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.3 and grows with every release.
+How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.4 and grows with every release.
 
 ## Contents
 
@@ -20,19 +20,23 @@ How to work with xtab: sign in, set up a workspace, a base and tables, enter rec
 - [Lookup, count and rollup](08-lookup-count-and-rollup.md)
 - [Formulas](09-formulas.md)
 - [Attachments](10-attachments.md)
-- [An expanded record](11-an-expanded-record.md)
-- [Views](12-views.md)
-- [Filter](13-filter.md)
-- [Sort](14-sort.md)
-- [Grouping](15-grouping.md)
-- [Record colours](16-record-colours.md)
-- [Summaries under columns](17-summaries-under-columns.md)
-- [Searching a view](18-searching-a-view.md)
-- [Selecting, copying and pasting](19-selecting-copying-and-pasting.md)
-- [Undo](20-undo.md)
-- [Import from CSV and Excel](21-import-from-csv-and-excel.md)
-- [Export to CSV and Excel](22-export-to-csv-and-excel.md)
-- [Quick jump](23-quick-jump.md)
-- [Working together](24-working-together.md)
-- [Theme](25-theme.md)
-- [Interface language](26-interface-language.md)
+- [Rich text](11-rich-text.md)
+- [An expanded record](12-an-expanded-record.md)
+- [Views](13-views.md)
+- [Filter](14-filter.md)
+- [Sort](15-sort.md)
+- [Grouping](16-grouping.md)
+- [Record colours](17-record-colours.md)
+- [Summaries under columns](18-summaries-under-columns.md)
+- [Searching a view](19-searching-a-view.md)
+- [Selecting, copying and pasting](20-selecting-copying-and-pasting.md)
+- [Undo](21-undo.md)
+- [Import from CSV and Excel](22-import-from-csv-and-excel.md)
+- [Export to CSV and Excel](23-export-to-csv-and-excel.md)
+- [Kanban](24-kanban.md)
+- [Forms](25-forms.md)
+- [Quick jump](26-quick-jump.md)
+- [Working together](27-working-together.md)
+- [API for integrations](28-api-for-integrations.md)
+- [Theme](29-theme.md)
+- [Interface language](30-interface-language.md)
