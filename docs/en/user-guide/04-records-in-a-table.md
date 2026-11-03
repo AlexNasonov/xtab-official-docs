@@ -1,7 +1,7 @@
 ---
 title: "Records in a table"
 description: "A table shows records as rows and fields as columns. The first column is the primary field of a record: it stays in place when the table scrolls to the right."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 4
 ---

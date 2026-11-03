@@ -1,7 +1,7 @@
 ---
 title: "Filter"
 description: "A filter keeps only the matching records in a view. Click Filter above the table, then + Condition: choose a field, a condition (for example «contains», «greater than», «today») and a value."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 14
 ---

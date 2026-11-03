@@ -1,9 +1,9 @@
 ---
 title: "Working together"
 description: "Changes by other people appear in your table by themselves, without reloading the page: new and deleted records, edits of cells, new fields."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
-order: 27
+order: 29
 ---
 
 Changes by other people appear in your table by themselves, without reloading the page: new and deleted records, edits of cells, new fields.

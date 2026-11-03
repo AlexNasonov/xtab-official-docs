@@ -1,7 +1,7 @@
 ---
 title: "Forms"
 description: "A form collects records into a table: the members of the base fill it in inside xtab, and anyone can fill it in by a public link without signing in."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 25
 ---

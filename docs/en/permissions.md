@@ -1,7 +1,7 @@
 ---
 title: "Permissions"
 description: "What each role can do in a workspace and in a base. Columns: R — read only, Cm — commenter, E — editor, Cr — creator, O — owner; each next role includes the rights of the previous one."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 ---
 
@@ -16,6 +16,7 @@ What each role can do in a workspace and in a base. Columns: R — read only, Cm
 | Rename the workspace | — | — | — | — | ✓ |
 | Manage the members of the workspace | — | — | — | ✓¹ | ✓ |
 | Delete and restore the workspace | — | — | — | — | ✓ |
+| Copy the workspace (with its bases and data) | — | — | — | — | ✓ |
 
 ## Base and structure
 
@@ -24,6 +25,7 @@ What each role can do in a workspace and in a base. Columns: R — read only, Cm
 | Open the base, see its tables and fields | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Rename the base, change its icon | — | — | — | ✓ | ✓ |
 | Manage the members of the base | — | — | — | ✓¹ | ✓ |
+| Copy the base (with its data) | — | — | — | ✓² | ✓² |
 | Delete and restore the base | — | — | — | — | ✓ |
 | Create, change, delete a table | — | — | — | ✓ | ✓ |
 | Create, change, delete a field; change the type of a field | — | — | — | ✓ | ✓ |
@@ -44,9 +46,10 @@ What each role can do in a workspace and in a base. Columns: R — read only, Cm
 | Read records | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Create, change, delete a record; drag a row | — | — | ✓ | ✓ | ✓ |
 | Import into an existing table (without creating fields) | — | — | ✓ | ✓ | ✓ |
-| Export a view to CSV / XLSX | ✓² | ✓² | ✓² | ✓² | ✓² |
+| Export a view to CSV / XLSX | ✓³ | ✓³ | ✓³ | ✓³ | ✓³ |
 
 ## Notes
 
 1. A creator invites people and changes roles up to Editor; only an owner gives the roles Creator and Owner.
-2. A bulk export asks to confirm the identity again and is written to the audit log; the policy of the organization may forbid export to the roles below Editor.
+2. The role Creator or higher is needed in the target workspace too. A copy without data needs the same rights.
+3. A bulk export asks to confirm the identity again and is written to the audit log; the policy of the organization may forbid export to the roles below Editor.

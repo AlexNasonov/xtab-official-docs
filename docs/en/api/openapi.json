@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "servers": [
     {
@@ -696,6 +696,150 @@
         }
       }
     },
+    "/bases/{base}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Copy a base with its tables, records, links, files, shared views and automations into\nits workspace or another one (creator of the base and of the workspace of the copy): `202`\nwith the operation; the copy is in `object` of the operation once it succeeded. The data\nare those of the moment the copy starts. The automations of the copy are disabled and\nhave no secrets; roles of the base are not copied.",
+        "operationId": "copy_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseCopyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the base or the workspace",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Copy a workspace with its bases (owner of the workspace): `202` with the operation; the\ncopy is in `object` of the operation once it succeeded, owned by the one who asked. The\nbases are copied as by `POST /bases/{base}/copy`; roles of the workspace are not copied.",
+        "operationId": "copy_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bases/{base}": {
       "get": {
         "tags": [
@@ -1109,6 +1253,78 @@
           },
           "422": {
             "description": "validation-failed: name taken or invalid, description too long, a primary field of another table or of a type that names no record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Copy a table in its base (creator of the base): its fields, records, links, files and\nshared views as they are when the copy starts; `202` with the operation, the copy is in\n`object` of the operation once it succeeded. A link to another table gets an inverse\nfield there named after the copy. Public links of forms and personal views are not\ncopied.",
+        "operationId": "copy_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted; `Location` is the operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: name",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1624,6 +1840,828 @@
           },
           "422": {
             "description": "validation-failed: email, name, role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/automations": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "The automations of a base, by name (creator of the base).",
+        "operationId": "list_automations",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "The base, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The automations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Automation"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Create an automation of a table of the base (creator of the base). It starts disabled;\nthe person who creates it is its owner, and its runs act with that person's rights.",
+        "operationId": "create_automation",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "The base, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created, disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name, the trigger, the condition, a step or a value; or too many automations",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "An automation (creator of its base).",
+        "operationId": "get_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The automation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Delete an automation with its versions (creator of its base).",
+        "operationId": "delete_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Change the name, the description or the definition of an automation (creator of its\nbase). A new definition is a new version: runs already started finish by the version they\ntook. Its owner does not change.",
+        "operationId": "change_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the name, the trigger, the condition, a step or a value",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/enable": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Enable an automation: it runs on its trigger from now on (creator of its base). An\nautomation the system stopped is enabled again the same way.",
+        "operationId": "enable_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/disable": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Disable an automation: it no longer starts runs (creator of its base).",
+        "operationId": "disable_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/runs": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "The runs of an automation, newest first, by pages of 50 (creator of its base). The log\nkeeps runs for the period of the organization, 30 days by default.",
+        "operationId": "list_runs",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "The page after this run, `run_…`: the last run of the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The runs; fewer than 50 — the last page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Run"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "A run with its steps: what each read and wrote, and why it failed (creator of the base).",
+        "operationId": "get_run",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "The run, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}/replay": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Run a failed run, or one of unknown outcome, again (creator of the base): by the same\nversion, from the step that failed or whose outcome is unknown — the steps done stay\ndone. A step of unknown outcome is safe to repeat when its receiver keeps the\n`Idempotency-Key` or the `Message-ID` the run sends.",
+        "operationId": "replay_run",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "The run, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Queued again",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-failed: only a failed run or one of unknown outcome runs again",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}/mark-done": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Mark the step of unknown outcome of a run done (creator of the base): the letter or the\nrequest had its effect, so the run goes on from the next step without repeating it.",
+        "operationId": "mark_done",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "The run, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Queued to go on",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-unknown: only a run of unknown outcome is marked done",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/secrets": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "The secrets of an automation by name, without values (creator of its base).",
+        "operationId": "list_secrets",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The secrets, without values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AutomationSecret"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/secrets/{name}": {
+      "put": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Set or replace the value of a secret of an automation (creator of its base). The value\nis encrypted with the key of the organization and never shown again.",
+        "operationId": "set_secret",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "The name of the secret: Latin letters, digits, `_` and `-`, up to 64",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecretInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationSecret"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: a name or a value that does not fit, too many secrets",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Delete a secret of an automation (creator of its base).",
+        "operationId": "delete_secret",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "The name of the secret",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: no such automation or secret",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2598,6 +3636,146 @@
           },
           "422": {
             "description": "validation-failed: issuers, group, max_days",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/outgoing-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "The policy «Outgoing addresses»: where HTTP actions, webhooks and letters of automations\nmay go.",
+        "operationId": "get_outgoing",
+        "responses": {
+          "200": {
+            "description": "The policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutgoingPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Change the policy «Outgoing addresses» (administrator). Opening every host needs the\npassword confirmed a moment before.",
+        "operationId": "set_outgoing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutgoingPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed: the lists in lower case, without repeats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutgoingPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator; step-up-required: confirm the password to open every host",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: an entry that does not fit, a list too long",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/invitation-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "The domains of e-mail people may be invited from.",
+        "operationId": "get_invitations",
+        "responses": {
+          "200": {
+            "description": "The policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Change the domains of invitations (administrator); members invited before stay.",
+        "operationId": "set_invitations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Changed: the domains in lower case, without repeats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not an administrator",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: a domain that does not fit, a list too long",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5648,6 +6826,188 @@
         },
         "additionalProperties": false
       },
+      "AssignInput": {
+        "type": "object",
+        "description": "A field and its value: an expression of the language of formulas over the record that\nstarted the run, such as `{Сумма} * 1.2` or `WORKDAY(TODAY(), 3)`.",
+        "required": [
+          "field",
+          "value"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "The field filled, `fld_…` or its name: a field a person fills — not computed, not a\nlink, a file or a person."
+          },
+          "value": {
+            "type": "string",
+            "description": "The expression; its value must fit the field."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Automation": {
+        "type": "object",
+        "description": "An automation.",
+        "required": [
+          "id",
+          "base",
+          "table",
+          "name",
+          "status",
+          "version",
+          "owner",
+          "definition",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`aut_…`."
+          },
+          "base": {
+            "type": "string",
+            "description": "Its base, `bas_…`."
+          },
+          "table": {
+            "type": "string",
+            "description": "The table of its trigger, `tbl_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it is for."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus",
+            "description": "Whether it runs."
+          },
+          "disabled_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the system stopped it."
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The version of its definition new runs take."
+          },
+          "owner": {
+            "type": "string",
+            "description": "The account it acts as, `usr_…`: its rights are checked on every run."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "What it does: fields by `fld_…`, the expressions with the current names of fields."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was created, RFC 3339."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "When it was changed last, RFC 3339."
+          }
+        }
+      },
+      "AutomationInput": {
+        "type": "object",
+        "description": "An automation to create.",
+        "required": [
+          "name",
+          "table",
+          "definition"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name, 1 to 200 characters."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it is for, up to 2000 characters."
+          },
+          "table": {
+            "type": "string",
+            "description": "The table of its trigger, `tbl_…`, a table of the base."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "What it does."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationPatch": {
+        "type": "object",
+        "description": "A change of an automation: the parts given change. A new definition is a new version;\nruns already started finish by the version they took.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The description; empty — none."
+          },
+          "definition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DefinitionInput",
+                "description": "The whole definition."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationSecret": {
+        "type": "object",
+        "description": "A secret of an automation: its name and when it was set. Its value is never shown —\nonly replaced.",
+        "required": [
+          "name",
+          "updated_at"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name the steps refer to: Latin letters, digits, `_` and `-`, up to 64."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "When its value was set, RFC 3339."
+          }
+        }
+      },
+      "AutomationStatus": {
+        "type": "string",
+        "description": "Whether an automation runs.",
+        "enum": [
+          "enabled",
+          "disabled",
+          "auto_disabled"
+        ]
+      },
       "Base": {
         "type": "object",
         "description": "A base.",
@@ -5688,6 +7048,27 @@
             "description": "The role of the user in the base: the highest of their roles in it and in its\nworkspace."
           }
         }
+      },
+      "BaseCopyInput": {
+        "type": "object",
+        "description": "A copy of a base.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the copy, 1 to 200 characters."
+          },
+          "workspace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`wsp_…` of the workspace of the copy; by default the one of the base."
+          }
+        },
+        "additionalProperties": false
       },
       "BaseFound": {
         "type": "object",
@@ -5744,6 +7125,25 @@
           "text": {
             "type": "string",
             "description": "The text: up to 200 characters; of its words the first 8 are searched."
+          }
+        },
+        "additionalProperties": false
+      },
+      "BasicInput": {
+        "type": "object",
+        "description": "Basic authentication of a request.",
+        "required": [
+          "user",
+          "password_secret"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "The user."
+          },
+          "password_secret": {
+            "type": "string",
+            "description": "The name of the secret with the password."
           }
         },
         "additionalProperties": false
@@ -5991,6 +7391,20 @@
         },
         "additionalProperties": false
       },
+      "CopyInput": {
+        "type": "object",
+        "description": "A copy of a table in its base.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the copy, unique in the base regardless of case."
+          }
+        },
+        "additionalProperties": false
+      },
       "Count": {
         "type": "object",
         "description": "The number of records of a view.",
@@ -6009,6 +7423,43 @@
             "description": "`false` — the estimate of the planner: the exact count did not fit its time."
           }
         }
+      },
+      "DefinitionInput": {
+        "type": "object",
+        "description": "What an automation does: when it starts, for which records, and its steps in order.",
+        "required": [
+          "trigger",
+          "steps"
+        ],
+        "properties": {
+          "trigger": {
+            "$ref": "#/components/schemas/TriggerInput",
+            "description": "What starts a run."
+          },
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "A run starts only for a record that meets it: a filter as views have, on fields of the\ntable of the trigger. Required by `record_matches`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepInput"
+            },
+            "description": "The steps, 1 to 25, done in order; a failed step stops the run."
+          },
+          "run_on_own_changes": {
+            "type": "boolean",
+            "description": "Whether changes made by its own runs start it again; off by default, so a step that\nchanges a field of its trigger does not loop."
+          }
+        },
+        "additionalProperties": false
       },
       "DeleteRecords": {
         "type": "object",
@@ -6680,6 +8131,34 @@
           }
         }
       },
+      "HeaderInput": {
+        "type": "object",
+        "description": "A header of a request: a template value or a secret, one of them.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name, `X-Api-Version`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The value, a template of one line."
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Or the name of a secret of the automation whose value it sends."
+          }
+        },
+        "additionalProperties": false
+      },
       "Import": {
         "type": "object",
         "description": "An import.",
@@ -6977,9 +8456,23 @@
           },
           "delivery": {
             "$ref": "#/components/schemas/Delivery",
-            "description": "`mail`, `failed` (try again) or `off` (the console issues the link)."
+            "description": "`mail` (on its way) or `off` (the console issues the link)."
           }
         }
+      },
+      "InvitationPolicyBody": {
+        "type": "object",
+        "description": "Who may be invited into the organization.",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Domains of e-mail, `example.ru`; empty — any. Letters of automations may go to\nthese domains too."
+          }
+        },
+        "additionalProperties": false
       },
       "IssuedToken": {
         "type": "object",
@@ -7076,6 +8569,17 @@
           }
         },
         "additionalProperties": false
+      },
+      "Method": {
+        "type": "string",
+        "description": "The method of an HTTP request.",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ]
       },
       "MoveRecords": {
         "type": "object",
@@ -7535,6 +9039,31 @@
         },
         "additionalProperties": false
       },
+      "OutgoingPolicyBody": {
+        "type": "object",
+        "description": "Where HTTP actions, webhooks and letters of automations may go. By default nowhere\noutside: no host, letters to members only.",
+        "properties": {
+          "any_host": {
+            "type": "boolean",
+            "description": "Any host for HTTP actions and webhooks. Turning it on needs the password confirmed\na moment before."
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Hosts of HTTP actions and webhooks: `api.example.com`, `*.example.com` (its\nsubdomains) or an address; up to 200."
+          },
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Addresses of letters besides the members and the domains of invitations; up to 200."
+          }
+        },
+        "additionalProperties": false
+      },
       "Page": {
         "type": "object",
         "description": "A page of records.",
@@ -7964,6 +9493,27 @@
         },
         "additionalProperties": false
       },
+      "RecipientsInput": {
+        "type": "object",
+        "description": "Recipients of a letter.",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fields of the record that started the run, `fld_…` or names: e-mail, a user, users."
+          },
+          "addresses": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Addresses separated by commas, a template: `a@example.ru, {{ {Менеджер} }}`."
+          }
+        },
+        "additionalProperties": false
+      },
       "Record": {
         "type": "object",
         "description": "A record.",
@@ -8302,6 +9852,95 @@
           "tall"
         ]
       },
+      "Run": {
+        "type": "object",
+        "description": "A run of an automation.",
+        "required": [
+          "id",
+          "automation",
+          "version",
+          "status",
+          "depth",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`run_…`."
+          },
+          "automation": {
+            "type": "string",
+            "description": "The automation, `aut_…`."
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The version of its definition the run follows."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The record that started it, `rec_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "description": "What became of it."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it failed, was cancelled or skipped."
+          },
+          "depth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 for a change by a person; one more for a change made by another run."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was queued, RFC 3339."
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it started, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it ended, RFC 3339."
+          }
+        }
+      },
+      "RunDetail": {
+        "type": "object",
+        "description": "A run with its steps.",
+        "required": [
+          "run",
+          "steps"
+        ],
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/Run",
+            "description": "The run."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RunStep"
+            },
+            "description": "Its steps done or failed, in order."
+          }
+        }
+      },
       "RunImport": {
         "type": "object",
         "description": "A run of an import (`POST /imports/{import}/run`).",
@@ -8309,6 +9948,82 @@
           "confirm": {
             "type": "boolean",
             "description": "Write even though more than a tenth of the values checked do not fit."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RunStatus": {
+        "type": "string",
+        "description": "What became of a run.",
+        "enum": [
+          "queued",
+          "running",
+          "waiting",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "unknown",
+          "skipped"
+        ]
+      },
+      "RunStep": {
+        "type": "object",
+        "description": "A step of a run.",
+        "required": [
+          "number",
+          "status"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Its number in the definition, from 1."
+          },
+          "status": {
+            "type": "string",
+            "description": "`succeeded` or `failed`."
+          },
+          "input": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "What it read."
+          },
+          "output": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "What it wrote."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it failed."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it ended, RFC 3339."
+          }
+        }
+      },
+      "SecretInput": {
+        "type": "object",
+        "description": "The value of a secret to set or replace.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "password",
+            "description": "The value: a key of an external service, a password. Up to 8 KB."
           }
         },
         "additionalProperties": false
@@ -8463,6 +10178,157 @@
           }
         },
         "additionalProperties": false
+      },
+      "StepInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Change the record that started the run.",
+            "required": [
+              "values",
+              "kind"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssignInput"
+                },
+                "description": "The fields and their new values; at least one."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "update_record"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Create a record in a table of the base.",
+            "required": [
+              "table",
+              "values",
+              "kind"
+            ],
+            "properties": {
+              "table": {
+                "type": "string",
+                "description": "The table, `tbl_…`."
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssignInput"
+                },
+                "description": "The fields of that table and their values."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "create_record"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Send a letter of plain text. It goes to members of the organization, to the domains\nof invitations and to the addresses the policy «Outgoing addresses» lists; at most 50\nrecipients.",
+            "required": [
+              "to",
+              "subject",
+              "body",
+              "kind"
+            ],
+            "properties": {
+              "to": {
+                "$ref": "#/components/schemas/RecipientsInput",
+                "description": "Who gets it; at least one field or address."
+              },
+              "cc": {
+                "$ref": "#/components/schemas/RecipientsInput",
+                "description": "Who gets a copy."
+              },
+              "subject": {
+                "type": "string",
+                "description": "The subject, a template: `Заказ {{ {Номер} }} оплачен`."
+              },
+              "body": {
+                "type": "string",
+                "description": "The text, a template."
+              },
+              "outside_from_form": {
+                "type": "boolean",
+                "description": "A run started by a public form may write outside the organization, where the policy\nallows; without it such a run writes to members only."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "send_email"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Send an HTTP request to a host the policy «Outgoing addresses» allows. A 2xx answer\nis success; the run sends `Idempotency-Key` and, with a signing secret,\n`X-Xtab-Signature: t=<time>,v1=<HMAC-SHA256 of \"<time>.<body>\">`.",
+            "required": [
+              "method",
+              "url",
+              "kind"
+            ],
+            "properties": {
+              "method": {
+                "$ref": "#/components/schemas/Method",
+                "description": "`GET`, `POST`, `PUT`, `PATCH` or `DELETE`."
+              },
+              "url": {
+                "type": "string",
+                "description": "The address, a template whose scheme and host come before any insert:\n`https://api.example.com/orders/{{ {Номер} }}`."
+              },
+              "headers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HeaderInput"
+                },
+                "description": "Headers; at most 25, none of the protocol."
+              },
+              "body": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The body, a template of JSON: inserts are escaped as its strings."
+              },
+              "signing_secret": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The name of the secret that signs the request."
+              },
+              "basic": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/BasicInput",
+                    "description": "Basic authentication."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "http_request"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "A step of a run."
       },
       "StepUpBody": {
         "type": "object",
@@ -8773,6 +10639,84 @@
           }
         },
         "additionalProperties": false
+      },
+      "TriggerInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A record is created.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_created"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "One of the fields changed in a record, computed ones included.",
+            "required": [
+              "fields",
+              "kind"
+            ],
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The fields, `fld_…` or names; at least one."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_updated"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A record began to meet the condition: once, when it passes from not meeting it to\nmeeting it.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_matches"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A form of the table sent a record.",
+            "required": [
+              "form",
+              "kind"
+            ],
+            "properties": {
+              "form": {
+                "type": "string",
+                "description": "The view of the form, `viw_…`."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "form_submitted"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "What starts a run, always on a record of the table of the automation."
       },
       "UndoImport": {
         "type": "object",
@@ -9177,6 +11121,10 @@
     {
       "name": "auth",
       "description": "Login and session"
+    },
+    {
+      "name": "automations",
+      "description": "Automations of bases: triggers, conditions and steps"
     },
     {
       "name": "me",

@@ -1,7 +1,7 @@
 ---
 title: "Руководство пользователя xtab"
 description: "Как работать с xtab: войти, завести рабочее пространство, базу и таблицы, вносить записи, настраивать поля и представления, искать, переносить данные из таблиц Excel и обратно."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "ru"
 order: 0
 ---
@@ -35,8 +35,10 @@ order: 0
 - [Экспорт в CSV и Excel](23-eksport-v-csv-i-excel.md)
 - [Канбан](24-kanban.md)
 - [Формы](25-formy.md)
-- [Быстрый переход](26-bystryi-perekhod.md)
-- [Совместная работа](27-sovmestnaya-rabota.md)
-- [API для интеграций](28-api-dlya-integratsii.md)
-- [Тема оформления](29-tema-oformleniya.md)
-- [Язык интерфейса](30-yazyk-interfeisa.md)
+- [Автоматизации](26-avtomatizatsii.md)
+- [Исходящие адреса](27-iskhodyashchie-adresa.md)
+- [Быстрый переход](28-bystryi-perekhod.md)
+- [Совместная работа](29-sovmestnaya-rabota.md)
+- [API для интеграций](30-api-dlya-integratsii.md)
+- [Тема оформления](31-tema-oformleniya.md)
+- [Язык интерфейса](32-yazyk-interfeisa.md)

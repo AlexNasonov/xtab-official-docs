@@ -1,7 +1,7 @@
 ---
 title: "Record colours"
 description: "Click Color above the table and choose how to colour records:"
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 17
 ---

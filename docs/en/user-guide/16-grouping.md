@@ -1,7 +1,7 @@
 ---
 title: "Grouping"
 description: "Click Group above the table, then Add grouping and choose a field: records with the same value gather in a group with a header and the number of records. You can group by several fields."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 16
 ---

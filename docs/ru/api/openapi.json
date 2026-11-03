@@ -6,7 +6,7 @@
     "license": {
       "name": "LicenseRef-Proprietary"
     },
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "servers": [
     {
@@ -696,6 +696,150 @@
         }
       }
     },
+    "/bases/{base}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Скопировать базу с её таблицами, записями, связями, файлами, общими представлениями и автоматизациями в её рабочее пространство или другое (создатель базы и пространства копии): `202` с операцией, копия — в `object` операции после её успеха. Данные — на момент начала копирования. Автоматизации копии выключены и не имеют секретов; роли базы не копируются.",
+        "operationId": "copy_base",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "`bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaseCopyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: база или рабочее пространство",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspace}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Скопировать рабочее пространство с его базами (владелец пространства): `202` с операцией, копия — в `object` операции после её успеха, её владелец — тот, кто попросил. Базы копируются как `POST /bases/{base}/copy`; роли пространства не копируются.",
+        "operationId": "copy_workspace",
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "description": "`wsp_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NameBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bases/{base}": {
       "get": {
         "tags": [
@@ -1109,6 +1253,78 @@
           },
           "422": {
             "description": "validation-failed: имя занято или неверно, описание слишком длинное, первичное поле из другой таблицы или типа, который не называет записи",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/copy": {
+      "post": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Скопировать таблицу в её базе (создатель базы): поля, записи, связи, файлы и общие представления — такими, какие они в момент начала копирования; `202` с операцией, копия — в `object` операции после её успеха. Связь с другой таблицей получает в ней обратное поле с названием копии. Публичные ссылки форм и личные представления не копируются.",
+        "operationId": "copy_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Принято; `Location` — адрес операции",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1624,6 +1840,828 @@
           },
           "422": {
             "description": "validation-failed: email, имя, роль",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/automations": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Автоматизации базы по названию (создатель базы).",
+        "operationId": "list_automations",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "База, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Автоматизации",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Automation"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Создать автоматизацию таблицы базы (создатель базы). Она создаётся выключенной; её владелец — тот, кто её создал, и запуски действуют с его правами.",
+        "operationId": "create_automation",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "База, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Создана, выключена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, триггер, условие, шаг или значение; или слишком много автоматизаций",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Автоматизация (создатель её базы).",
+        "operationId": "get_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Автоматизация",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Удалить автоматизацию вместе с её версиями (создатель её базы).",
+        "operationId": "delete_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Изменить название, описание или определение автоматизации (создатель её базы). Новое определение — новая версия: уже начатые запуски завершаются по версии, с которой начались. Владелец не меняется.",
+        "operationId": "change_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: название, триггер, условие, шаг или значение",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/enable": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Включить автоматизацию: с этого момента она запускается по своему триггеру (создатель её базы). Автоматизация, остановленная системой, включается так же.",
+        "operationId": "enable_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Включена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/disable": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Выключить автоматизацию: она больше не запускается (создатель её базы).",
+        "operationId": "disable_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Выключена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/runs": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Запуски автоматизации, сначала новые, страницами по 50 (создатель её базы). Журнал хранит запуски в течение срока организации, по умолчанию 30 дней.",
+        "operationId": "list_runs",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Страница после этого запуска, `run_…`: последнего запуска предыдущей страницы.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Запуски; меньше 50 — последняя страница",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Run"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Запуск с его шагами: что каждый прочитал и записал и почему не удался (создатель базы).",
+        "operationId": "get_run",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "Запуск, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Запуск",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}/replay": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Повторить неудачный запуск или запуск с неизвестным исходом (создатель базы): по той же версии, с шага, который не удался или чей исход неизвестен, — выполненные шаги не повторяются. Шаг с неизвестным исходом безопасно повторить, если получатель учитывает `Idempotency-Key` или `Message-ID`, которые отправляет запуск.",
+        "operationId": "replay_run",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "Запуск, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Снова поставлен в очередь",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-failed: повторить можно только неудачный запуск или запуск с неизвестным исходом",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run}/mark-done": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Отметить шаг запуска с неизвестным исходом выполненным (создатель базы): письмо или запрос сработали, поэтому запуск продолжается со следующего шага, не повторяя этот.",
+        "operationId": "mark_done",
+        "parameters": [
+          {
+            "name": "run",
+            "in": "path",
+            "description": "Запуск, `run_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Поставлен в очередь, чтобы продолжить",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "not-unknown: отметить выполненным можно только запуск с неизвестным исходом",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/secrets": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Секреты автоматизации по имени, без значений (создатель её базы).",
+        "operationId": "list_secrets",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Секреты, без значений",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AutomationSecret"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/secrets/{name}": {
+      "put": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Задать или заменить значение секрета автоматизации (создатель её базы). Значение шифруется ключом организации и больше не показывается.",
+        "operationId": "set_secret",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Имя секрета: латинские буквы, цифры, `_` и `-`, до 64",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecretInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Задан",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationSecret"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: имя или значение не подходит, слишком много секретов",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Удалить секрет автоматизации (создатель её базы).",
+        "operationId": "delete_secret",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Имя секрета",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Удалено"
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: нет такой автоматизации или секрета",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2598,6 +3636,146 @@
           },
           "422": {
             "description": "validation-failed: issuers, group, max_days",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/outgoing-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Политика «Исходящие адреса»: куда могут обращаться HTTP-действия, вебхуки и письма автоматизаций.",
+        "operationId": "get_outgoing",
+        "responses": {
+          "200": {
+            "description": "Политика",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutgoingPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Изменить политику «Исходящие адреса» (администратор). Чтобы открыть любые узлы, нужно только что подтвердить пароль.",
+        "operationId": "set_outgoing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutgoingPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменена: списки в нижнем регистре, без повторов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutgoingPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор; step-up-required: подтвердите пароль, чтобы открыть любые узлы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: запись не подходит, список слишком длинный",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/org/invitation-policy": {
+      "get": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Домены e-mail, с которых можно приглашать людей.",
+        "operationId": "get_invitations",
+        "responses": {
+          "200": {
+            "description": "Политика",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPolicyBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "members"
+        ],
+        "summary": "Изменить домены приглашений (администратор); приглашённые раньше участники остаются.",
+        "operationId": "set_invitations",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationPolicyBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Изменена: домены в нижнем регистре, без повторов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationPolicyBody"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: домен не подходит, список слишком длинный",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5648,6 +6826,188 @@
         },
         "additionalProperties": false
       },
+      "AssignInput": {
+        "type": "object",
+        "description": "Поле и его значение: выражение языка формул над записью, запустившей автоматизацию, например `{Сумма} * 1.2` или `WORKDAY(TODAY(), 3)`.",
+        "required": [
+          "field",
+          "value"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Заполняемое поле, `fld_…` или имя: поле, которое заполняет человек, — не вычисляемое, не связь, не файлы и не пользователь."
+          },
+          "value": {
+            "type": "string",
+            "description": "Выражение; его значение должно подходить полю."
+          }
+        },
+        "additionalProperties": false
+      },
+      "Automation": {
+        "type": "object",
+        "description": "Автоматизация.",
+        "required": [
+          "id",
+          "base",
+          "table",
+          "name",
+          "status",
+          "version",
+          "owner",
+          "definition",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`aut_…`."
+          },
+          "base": {
+            "type": "string",
+            "description": "Её база, `bas_…`."
+          },
+          "table": {
+            "type": "string",
+            "description": "Таблица её триггера, `tbl_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Название."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Для чего он."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus",
+            "description": "Запускается ли она."
+          },
+          "disabled_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Почему её остановила система."
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Версия определения, по которой идут новые запуски."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Учётная запись, от имени которой она действует, `usr_…`: её права проверяются при каждом запуске."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "Что она делает: поля — по `fld_…`, выражения — с текущими именами полей."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда создана, RFC 3339."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Когда изменена в последний раз, RFC 3339."
+          }
+        }
+      },
+      "AutomationInput": {
+        "type": "object",
+        "description": "Создаваемая автоматизация.",
+        "required": [
+          "name",
+          "table",
+          "definition"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название, от 1 до 200 символов."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Для чего она, до 2000 символов."
+          },
+          "table": {
+            "type": "string",
+            "description": "Таблица её триггера, `tbl_…`, — таблица этой базы."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "Что она делает."
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationPatch": {
+        "type": "object",
+        "description": "Изменение автоматизации: меняются переданные части. Новое определение — новая версия; уже начатые запуски завершаются по версии, с которой начались.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Название."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Описание; пустое — без описания."
+          },
+          "definition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DefinitionInput",
+                "description": "Определение целиком."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationSecret": {
+        "type": "object",
+        "description": "Секрет автоматизации: имя и время, когда он задан. Значение никогда не показывается — только заменяется.",
+        "required": [
+          "name",
+          "updated_at"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Имя, по которому на него ссылаются шаги: латинские буквы, цифры, `_` и `-`, до 64."
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Когда задано значение, RFC 3339."
+          }
+        }
+      },
+      "AutomationStatus": {
+        "type": "string",
+        "description": "Запускается ли автоматизация.",
+        "enum": [
+          "enabled",
+          "disabled",
+          "auto_disabled"
+        ]
+      },
       "Base": {
         "type": "object",
         "description": "База.",
@@ -5688,6 +7048,27 @@
             "description": "Роль пользователя в базе: старшая из его ролей в ней и в её рабочем пространстве."
           }
         }
+      },
+      "BaseCopyInput": {
+        "type": "object",
+        "description": "Копия базы.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название копии, от 1 до 200 символов."
+          },
+          "workspace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`wsp_…` рабочего пространства копии; по умолчанию — пространство базы."
+          }
+        },
+        "additionalProperties": false
       },
       "BaseFound": {
         "type": "object",
@@ -5744,6 +7125,25 @@
           "text": {
             "type": "string",
             "description": "Текст: до 200 символов; ищутся первые 8 его слов."
+          }
+        },
+        "additionalProperties": false
+      },
+      "BasicInput": {
+        "type": "object",
+        "description": "Basic-аутентификация запроса.",
+        "required": [
+          "user",
+          "password_secret"
+        ],
+        "properties": {
+          "user": {
+            "type": "string",
+            "description": "Пользователь."
+          },
+          "password_secret": {
+            "type": "string",
+            "description": "Имя секрета с паролем."
           }
         },
         "additionalProperties": false
@@ -5991,6 +7391,20 @@
         },
         "additionalProperties": false
       },
+      "CopyInput": {
+        "type": "object",
+        "description": "Копия таблицы в её базе.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Название копии, уникальное в базе без учёта регистра."
+          }
+        },
+        "additionalProperties": false
+      },
       "Count": {
         "type": "object",
         "description": "Число записей представления.",
@@ -6009,6 +7423,43 @@
             "description": "`false` — оценка планировщика: точный подсчёт не уложился в своё время."
           }
         }
+      },
+      "DefinitionInput": {
+        "type": "object",
+        "description": "Что делает автоматизация: когда запускается, для каких записей и какие шаги выполняет по порядку.",
+        "required": [
+          "trigger",
+          "steps"
+        ],
+        "properties": {
+          "trigger": {
+            "$ref": "#/components/schemas/TriggerInput",
+            "description": "Что запускает автоматизацию."
+          },
+          "condition": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FilterInput",
+                "description": "Запуск идёт только для записи, которая ему соответствует: фильтр, как у представлений, по полям таблицы триггера. Обязательно для `record_matches`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepInput"
+            },
+            "description": "Шаги, от 1 до 25, выполняются по порядку; неудачный шаг останавливает запуск."
+          },
+          "run_on_own_changes": {
+            "type": "boolean",
+            "description": "Запускают ли её изменения, сделанные её же запусками; по умолчанию нет, чтобы шаг, меняющий поле её триггера, не зацикливался."
+          }
+        },
+        "additionalProperties": false
       },
       "DeleteRecords": {
         "type": "object",
@@ -6680,6 +8131,34 @@
           }
         }
       },
+      "HeaderInput": {
+        "type": "object",
+        "description": "Заголовок запроса: значение-шаблон или секрет, одно из двух.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Имя, `X-Api-Version`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Значение — шаблон в одну строку."
+          },
+          "secret": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Или имя секрета автоматизации, значение которого отправляется."
+          }
+        },
+        "additionalProperties": false
+      },
       "Import": {
         "type": "object",
         "description": "Импорт.",
@@ -6977,9 +8456,23 @@
           },
           "delivery": {
             "$ref": "#/components/schemas/Delivery",
-            "description": "`mail`, `failed` (повторите) или `off` (ссылку выдаёт консоль)."
+            "description": "`mail` (в пути) или `off` (ссылку выдаёт консоль)."
           }
         }
+      },
+      "InvitationPolicyBody": {
+        "type": "object",
+        "description": "Кого можно пригласить в организацию.",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Домены e-mail, `example.ru`; пусто — любые. На эти домены могут уходить и письма автоматизаций."
+          }
+        },
+        "additionalProperties": false
       },
       "IssuedToken": {
         "type": "object",
@@ -7076,6 +8569,17 @@
           }
         },
         "additionalProperties": false
+      },
+      "Method": {
+        "type": "string",
+        "description": "Метод HTTP-запроса.",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ]
       },
       "MoveRecords": {
         "type": "object",
@@ -7535,6 +9039,31 @@
         },
         "additionalProperties": false
       },
+      "OutgoingPolicyBody": {
+        "type": "object",
+        "description": "Куда могут обращаться HTTP-действия, вебхуки и письма автоматизаций. По умолчанию никуда наружу: ни одного узла, письма — только участникам.",
+        "properties": {
+          "any_host": {
+            "type": "boolean",
+            "description": "Любые узлы для HTTP-действий и вебхуков. Чтобы включить, нужно только что подтвердить пароль."
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Узлы HTTP-действий и вебхуков: `api.example.com`, `*.example.com` (его поддомены) или адрес; до 200."
+          },
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Адреса писем, кроме участников и доменов приглашений; до 200."
+          }
+        },
+        "additionalProperties": false
+      },
       "Page": {
         "type": "object",
         "description": "Страница записей.",
@@ -7964,6 +9493,27 @@
         },
         "additionalProperties": false
       },
+      "RecipientsInput": {
+        "type": "object",
+        "description": "Получатели письма.",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Поля записи, запустившей автоматизацию, `fld_…` или имена: e-mail, пользователь, пользователи."
+          },
+          "addresses": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Адреса через запятую, шаблон: `a@example.ru, {{ {Менеджер} }}`."
+          }
+        },
+        "additionalProperties": false
+      },
       "Record": {
         "type": "object",
         "description": "Запись.",
@@ -8302,6 +9852,95 @@
           "tall"
         ]
       },
+      "Run": {
+        "type": "object",
+        "description": "Запуск автоматизации.",
+        "required": [
+          "id",
+          "automation",
+          "version",
+          "status",
+          "depth",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`run_…`."
+          },
+          "automation": {
+            "type": "string",
+            "description": "Автоматизация, `aut_…`."
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Версия определения, по которой идёт запуск."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Запись, которая его запустила, `rec_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus",
+            "description": "Чем он закончился."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Почему он не удался, отменён или пропущен."
+          },
+          "depth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 — для изменения, сделанного человеком; на единицу больше — для изменения, сделанного другим запуском."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда поставлен в очередь, RFC 3339."
+          },
+          "started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда начался, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда завершилась, RFC 3339."
+          }
+        }
+      },
+      "RunDetail": {
+        "type": "object",
+        "description": "Запуск с его шагами.",
+        "required": [
+          "run",
+          "steps"
+        ],
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/Run",
+            "description": "Запуск."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RunStep"
+            },
+            "description": "Его выполненные или неудавшиеся шаги по порядку."
+          }
+        }
+      },
       "RunImport": {
         "type": "object",
         "description": "Запуск импорта (`POST /imports/{import}/run`).",
@@ -8309,6 +9948,82 @@
           "confirm": {
             "type": "boolean",
             "description": "Записать, даже если больше десятой части проверенных значений не подходит."
+          }
+        },
+        "additionalProperties": false
+      },
+      "RunStatus": {
+        "type": "string",
+        "description": "Чем закончился запуск.",
+        "enum": [
+          "queued",
+          "running",
+          "waiting",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "unknown",
+          "skipped"
+        ]
+      },
+      "RunStep": {
+        "type": "object",
+        "description": "Шаг запуска.",
+        "required": [
+          "number",
+          "status"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Его номер в определении, с 1."
+          },
+          "status": {
+            "type": "string",
+            "description": "`succeeded` или `failed`."
+          },
+          "input": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Что он прочитал."
+          },
+          "output": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Что он записал."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Причина сбоя."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда завершилась, RFC 3339."
+          }
+        }
+      },
+      "SecretInput": {
+        "type": "object",
+        "description": "Значение секрета, которое задаётся или заменяет прежнее.",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "format": "password",
+            "description": "Значение: ключ внешнего сервиса, пароль. До 8 КБ."
           }
         },
         "additionalProperties": false
@@ -8463,6 +10178,157 @@
           }
         },
         "additionalProperties": false
+      },
+      "StepInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Изменить запись, запустившую автоматизацию.",
+            "required": [
+              "values",
+              "kind"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssignInput"
+                },
+                "description": "Поля и их новые значения; хотя бы одно."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "update_record"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Создать запись в таблице базы.",
+            "required": [
+              "table",
+              "values",
+              "kind"
+            ],
+            "properties": {
+              "table": {
+                "type": "string",
+                "description": "Таблица, `tbl_…`."
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssignInput"
+                },
+                "description": "Поля этой таблицы и их значения."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "create_record"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Отправить письмо простым текстом. Оно уходит участникам организации, на домены приглашений и на адреса из политики «Исходящие адреса»; не больше 50 получателей.",
+            "required": [
+              "to",
+              "subject",
+              "body",
+              "kind"
+            ],
+            "properties": {
+              "to": {
+                "$ref": "#/components/schemas/RecipientsInput",
+                "description": "Кто получает письмо; хотя бы одно поле или адрес."
+              },
+              "cc": {
+                "$ref": "#/components/schemas/RecipientsInput",
+                "description": "Кто получает копию."
+              },
+              "subject": {
+                "type": "string",
+                "description": "Тема — шаблон: `Заказ {{ {Номер} }} оплачен`."
+              },
+              "body": {
+                "type": "string",
+                "description": "Текст — шаблон."
+              },
+              "outside_from_form": {
+                "type": "boolean",
+                "description": "Запуск от публичной формы может писать вне организации, где это разрешает политика; без отметки такой запуск пишет только участникам."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "send_email"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Отправить HTTP-запрос на узел, разрешённый политикой «Исходящие адреса». Ответ 2xx — успех; запуск отправляет `Idempotency-Key`, а с секретом подписи — `X-Xtab-Signature: t=<время>,v1=<HMAC-SHA256 от \"<время>.<тело>\">`.",
+            "required": [
+              "method",
+              "url",
+              "kind"
+            ],
+            "properties": {
+              "method": {
+                "$ref": "#/components/schemas/Method",
+                "description": "`GET`, `POST`, `PUT`, `PATCH` или `DELETE`."
+              },
+              "url": {
+                "type": "string",
+                "description": "Адрес — шаблон, в котором схема и узел идут до первой вставки: `https://api.example.com/orders/{{ {Номер} }}`."
+              },
+              "headers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/HeaderInput"
+                },
+                "description": "Заголовки; не больше 25, без служебных."
+              },
+              "body": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Тело — шаблон JSON: вставки экранируются как его строки."
+              },
+              "signing_secret": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Имя секрета, которым подписывается запрос."
+              },
+              "basic": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/BasicInput",
+                    "description": "Basic-аутентификация."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "http_request"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Шаг запуска."
       },
       "StepUpBody": {
         "type": "object",
@@ -8773,6 +10639,84 @@
           }
         },
         "additionalProperties": false
+      },
+      "TriggerInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "Создана запись.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_created"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "В записи изменилось одно из полей, включая вычисляемые.",
+            "required": [
+              "fields",
+              "kind"
+            ],
+            "properties": {
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Поля, `fld_…` или имена; хотя бы одно."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_updated"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Запись стала соответствовать условию: один раз, когда она переходит из «не соответствует» в «соответствует».",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "record_matches"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Форма таблицы отправила запись.",
+            "required": [
+              "form",
+              "kind"
+            ],
+            "properties": {
+              "form": {
+                "type": "string",
+                "description": "Представление формы, `viw_…`."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "form_submitted"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Что запускает автоматизацию — всегда по записи её таблицы."
       },
       "UndoImport": {
         "type": "object",
@@ -9177,6 +11121,10 @@
     {
       "name": "auth",
       "description": "Вход и сессия"
+    },
+    {
+      "name": "automations",
+      "description": "Автоматизации баз: триггеры, условия и шаги"
     },
     {
       "name": "me",

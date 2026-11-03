@@ -1,7 +1,7 @@
 ---
 title: "Kanban"
 description: "A kanban shows records as cards in stacks, by a single select or a user field. It suits tasks, requests and deals moving through stages."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 24
 ---

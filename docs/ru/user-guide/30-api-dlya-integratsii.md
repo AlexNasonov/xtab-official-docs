@@ -1,9 +1,9 @@
 ---
 title: "API для интеграций"
 description: "Программы — обмен с 1С, отчёты в BI, свои скрипты — работают с xtab через REST API."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "ru"
-order: 28
+order: 30
 ---
 
 Программы — обмен с 1С, отчёты в BI, свои скрипты — работают с xtab через REST API.

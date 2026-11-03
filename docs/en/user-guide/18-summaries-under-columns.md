@@ -1,7 +1,7 @@
 ---
 title: "Summaries under columns"
 description: "In the row at the bottom of the table, click under a column and choose a function: sum, average, minimum, maximum, the number of filled or empty, unique, the earliest or latest date and others."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 18
 ---

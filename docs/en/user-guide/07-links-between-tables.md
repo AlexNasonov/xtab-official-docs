@@ -1,7 +1,7 @@
 ---
 title: "Links between tables"
 description: "A Link field connects a record with records of another table: for example, a customer with their suppliers."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 7
 ---

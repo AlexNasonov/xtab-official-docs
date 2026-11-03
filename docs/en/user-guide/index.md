@@ -1,7 +1,7 @@
 ---
 title: "xtab user guide"
 description: "How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 0
 ---
@@ -35,8 +35,10 @@ How to work with xtab: sign in, set up a workspace, a base and tables, enter rec
 - [Export to CSV and Excel](23-export-to-csv-and-excel.md)
 - [Kanban](24-kanban.md)
 - [Forms](25-forms.md)
-- [Quick jump](26-quick-jump.md)
-- [Working together](27-working-together.md)
-- [API for integrations](28-api-for-integrations.md)
-- [Theme](29-theme.md)
-- [Interface language](30-interface-language.md)
+- [Automations](26-automations.md)
+- [Outgoing addresses](27-outgoing-addresses.md)
+- [Quick jump](28-quick-jump.md)
+- [Working together](29-working-together.md)
+- [API for integrations](30-api-for-integrations.md)
+- [Theme](31-theme.md)
+- [Interface language](32-interface-language.md)

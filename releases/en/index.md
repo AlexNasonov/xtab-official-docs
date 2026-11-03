@@ -1,11 +1,11 @@
 ---
 title: "Overview of the current version"
-description: "xtab 0.4.0 — tables for working together in the browser, on your own server and without access to the internet."
-version: "v0.4.0"
+description: "xtab 0.5.0 — tables for working together in the browser, on your own server and without access to the internet. The fifth internal version: automations and copies of tables, bases and workspaces."
+version: "v0.5.0"
 lang: "en"
 ---
 
-**xtab 0.4.0** — tables for working together in the browser, on your own server and without access to the internet. The fourth internal version: kanban, forms, rich text, access and groups in the interface, API tokens and the installer.
+**xtab 0.5.0** — tables for working together in the browser, on your own server and without access to the internet. The fifth internal version: automations and copies of tables, bases and workspaces.
 
 - Login by invitation, password and password reset link.
 - Workspaces, bases and tables; jump to a base, table or record with Ctrl+K.
@@ -20,8 +20,10 @@ lang: "en"
 - Search in a view (Ctrl+F).
 - Range selection, copying and pasting from Excel and Google Sheets, fill down, undo and redo.
 - Import of tables and records from CSV and Excel, export of a view to CSV and Excel.
+- Automations: when a record is created, changes, begins to meet a condition or comes from a form — update the record, create a record in another table, send an email or an HTTP request; a run log with running again.
+- Copies of a table, a base and a workspace with their data, links, files and views.
 - A whole record in its own window: press Space or click the row number.
 - Changes by other people show up at once, without reloading the page.
 - Russian and English interface, light and dark themes.
 - REST API with an OpenAPI specification: access by API tokens with permissions and rate limits, service accounts for integrations.
-- Delivered as a single executable and Docker Compose; works in a closed network; installation, update, rollback and restore of the database with one command of the installer.
+- Delivered as a single executable and Docker Compose; works in a closed network; installation, update, rollback and restore of the database with one command of the installer; Debian 12 and Debian 13.

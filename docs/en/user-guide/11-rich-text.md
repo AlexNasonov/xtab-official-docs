@@ -1,7 +1,7 @@
 ---
 title: "Rich text"
 description: "The field Long text with formatting keeps notes, descriptions and instructions with headings, lists, links and quotes."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 11
 ---

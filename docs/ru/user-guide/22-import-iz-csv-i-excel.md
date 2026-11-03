@@ -1,7 +1,7 @@
 ---
 title: "Импорт из CSV и Excel"
 description: "Подходят файлы CSV и XLSX до 50 МБ; кодировку и разделитель CSV xtab определяет сам."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "ru"
 order: 22
 ---

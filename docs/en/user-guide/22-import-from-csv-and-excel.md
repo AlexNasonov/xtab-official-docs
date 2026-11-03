@@ -1,7 +1,7 @@
 ---
 title: "Import from CSV and Excel"
 description: "CSV and XLSX files up to 50 MB fit; xtab detects the encoding and separator of CSV itself."
-version: "v0.4.0"
+version: "v0.5.0"
 lang: "en"
 order: 22
 ---
