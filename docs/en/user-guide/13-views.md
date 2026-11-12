@@ -1,7 +1,7 @@
 ---
 title: "Views"
 description: "A view is a way of looking at a table: which fields are visible, in what order and how wide the columns are, which records are picked and how they are sorted, grouped and coloured."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 13
 ---

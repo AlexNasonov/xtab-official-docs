@@ -1,7 +1,7 @@
 ---
 title: "Formulas"
 description: "A Formula field computes a value from other fields of the record, for example {Price} * {Quantity}."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 9
 ---

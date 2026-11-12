@@ -1,0 +1,30 @@
+{
+  "bundles": [
+    {
+      "bytes": 676064520,
+      "file": "xtab-v0.8.0-linux-amd64.tar.gz",
+      "platform": "linux/amd64",
+      "sha256": "4e9068162c0e5058fc8dbaa2e11a81a88388323f19a6bef6b22fa90a93a297f0"
+    },
+    {
+      "bytes": 662522658,
+      "file": "xtab-v0.8.0-linux-arm64.tar.gz",
+      "platform": "linux/arm64",
+      "sha256": "730794caaef655334221c39e9e304a5907c67ab3ca46d29333d822befce8a9c8"
+    }
+  ],
+  "checksums": "releases/v0.8.0/SHA256SUMS",
+  "sbom": [
+    {
+      "bytes": 603767,
+      "file": "xtab-v0.8.0-server.cdx.json",
+      "sha256": "a004b05fd4a317c09df873048578d2a2d1c941a1711644bf8496735fe73ca429"
+    },
+    {
+      "bytes": 280593,
+      "file": "xtab-v0.8.0-web.cdx.json",
+      "sha256": "fe5cefe219d6f185d91735b1548b9ae873779c7fa957389b7ea9c3a5b20b044e"
+    }
+  ],
+  "version": "v0.8.0"
+}

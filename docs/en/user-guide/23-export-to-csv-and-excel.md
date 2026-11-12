@@ -1,7 +1,7 @@
 ---
 title: "Export to CSV and Excel"
 description: "Click the down-arrow icon above the table, choose a format — CSV or Excel (XLSX) — and for CSV a separator, then Download. The file gets the records and fields of the view, with its filter and sort."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 23
 ---

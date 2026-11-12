@@ -1,7 +1,7 @@
 ---
 title: "Sort"
 description: "Click Sort above the table, then Add sort, choose a field and a direction. The second and further sorts order the records with equal values of the first one."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 15
 ---

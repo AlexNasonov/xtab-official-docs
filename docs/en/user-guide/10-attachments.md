@@ -1,7 +1,7 @@
 ---
 title: "Attachments"
 description: "An Attachments field holds files: contracts, scans, photos."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 10
 ---

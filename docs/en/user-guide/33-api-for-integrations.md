@@ -1,9 +1,9 @@
 ---
 title: "API for integrations"
 description: "Programs — a 1C exchange, BI reports, your own scripts — work with xtab through its REST API."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
-order: 30
+order: 33
 ---
 
 Programs — a 1C exchange, BI reports, your own scripts — work with xtab through its REST API.

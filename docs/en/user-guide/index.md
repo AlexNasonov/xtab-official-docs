@@ -1,12 +1,12 @@
 ---
 title: "xtab user guide"
 description: "How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 0
 ---
 
-How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.4 and grows with every release.
+How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.7 and grows with every release.
 
 ## Contents
 
@@ -36,9 +36,14 @@ How to work with xtab: sign in, set up a workspace, a base and tables, enter rec
 - [Kanban](24-kanban.md)
 - [Forms](25-forms.md)
 - [Automations](26-automations.md)
-- [Outgoing addresses](27-outgoing-addresses.md)
-- [Quick jump](28-quick-jump.md)
-- [Working together](29-working-together.md)
-- [API for integrations](30-api-for-integrations.md)
-- [Theme](31-theme.md)
-- [Interface language](32-interface-language.md)
+- [Interfaces](27-interfaces.md)
+- [Outgoing addresses](28-outgoing-addresses.md)
+- [Quick jump](29-quick-jump.md)
+- [Working together](30-working-together.md)
+- [Account security](31-account-security.md)
+- [Administering the organization](32-administering-the-organization.md)
+- [API for integrations](33-api-for-integrations.md)
+- [Accessibility](34-accessibility.md)
+- [About](35-about.md)
+- [Theme](36-theme.md)
+- [Interface language](37-interface-language.md)

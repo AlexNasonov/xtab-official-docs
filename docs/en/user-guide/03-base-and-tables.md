@@ -1,7 +1,7 @@
 ---
 title: "Base and tables"
 description: "The tables of a base are the tabs under the top bar. The first table opens."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 3
 ---

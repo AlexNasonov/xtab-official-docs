@@ -1,7 +1,7 @@
 ---
 title: "Home: workspaces and bases"
 description: "After you sign in, the home page opens. On the left are the workspaces: each gathers the bases of one department or line of work. On the right are the bases of each workspace as tiles."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 2
 ---

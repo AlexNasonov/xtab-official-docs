@@ -1,7 +1,7 @@
 ---
 title: "An expanded record"
 description: "To see every field of one record at once, select one of its cells and press Space, or click the number of its row on the left."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 12
 ---

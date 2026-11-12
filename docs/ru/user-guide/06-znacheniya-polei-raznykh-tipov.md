@@ -1,7 +1,7 @@
 ---
 title: "Значения полей разных типов"
 description: ""
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "ru"
 order: 6
 ---

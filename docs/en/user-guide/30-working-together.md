@@ -1,9 +1,9 @@
 ---
 title: "Working together"
 description: "Changes by other people appear in your table by themselves, without reloading the page: new and deleted records, edits of cells, new fields."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
-order: 29
+order: 30
 ---
 
 Changes by other people appear in your table by themselves, without reloading the page: new and deleted records, edits of cells, new fields.
@@ -32,13 +32,3 @@ A token lets a program (a 1C exchange, a BI report) reach xtab as you. **Account
 ![API tokens](img/tokens.png)
 
 - The administrator of the organization sets the policy of tokens here too (who issues them, the longest life, limits) and sees every token of the organization.
-
-## Groups
-
-The administrator of the organization keeps groups: **account menu → Groups**.
-
-- Enter a name and press **Create a group**.
-- **Members** opens who is in the group: add a person by e-mail or name, the cross takes them out. If you add yourself to a group that has roles, xtab asks for your password.
-- **Rename** and **Delete** are on each group. Deleting a group also removes the access it gave.
-
-![Groups](img/user-groups.png)

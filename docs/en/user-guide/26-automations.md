@@ -1,7 +1,7 @@
 ---
 title: "Automations"
 description: "An automation does work by itself: when a record is created, changed, begins to match a condition or comes from a form, it does its steps — changes the record, creates a record in another table…"
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 26
 ---

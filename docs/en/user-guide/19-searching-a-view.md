@@ -1,7 +1,7 @@
 ---
 title: "Searching a view"
 description: "Press Ctrl+F (⌘F on a Mac) or click the magnifier above the table and type the text."
-version: "v0.5.0"
+version: "v0.8.0"
 lang: "en"
 order: 19
 ---
