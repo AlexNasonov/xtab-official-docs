@@ -1,17 +1,21 @@
 ---
 title: "Lookup, count and rollup"
 description: "These fields take data from linked records and update themselves when the linked records change."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "en"
 order: 8
 ---
 
 These fields take data from linked records and update themselves when the linked records change.
 
-- **Lookup** shows the values of a chosen field of the linked records, such as the cities of the suppliers. In the field form choose the **Link field** and the **Field of the linked table**.
+- **Lookup** shows the values of a chosen field of the linked records, such as the cities of the suppliers. In the field form choose the **Link field** and the **Field of the linked table**. In the table every value is on its own grey pill, and in the record window, the kanban, the list and the headers of groups the values are separated by semicolons, so numbers with separators do not run together: «123,456.11; 11,235».
 - **Count** counts the linked records. Choose the **Link field**.
 
 ![A lookup of supplier names](img/lookup.png)
+
+A lookup of texts — names, choices, names of people — can be filtered, sorted and grouped by: its values compare as one text separated by commas. A lookup of numbers, dates or checkboxes cannot be chosen in a filter, a sort or a group yet — add a formula over it, such as `ARRAYJOIN({Prices}, ", ")` or `SUM({Prices})`, and filter by the formula.
+
+Link and attachment fields cannot be looked up — they are not in the **Field of the linked table** list. To show a field of a record linked to the linked one, use two lookups. For example, the link «Group» of «Items» leads to «Item groups», and the groups have a link «Dictionary»: first add a lookup «Dictionary name» through «Dictionary» in «Item groups», then a lookup of that field through «Group» in «Items».
 
 ![The count of linked records](img/count.png)
 

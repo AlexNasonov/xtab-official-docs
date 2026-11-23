@@ -1,12 +1,12 @@
 ---
 title: "xtab user guide"
 description: "How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "en"
 order: 0
 ---
 
-How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.7 and grows with every release.
+How to work with xtab: sign in, set up a workspace, a base and tables, enter records, set up fields and views, search, and move data from spreadsheets and back. The guide describes version 0.9 and grows with every release.
 
 ## Contents
 
@@ -19,31 +19,32 @@ How to work with xtab: sign in, set up a workspace, a base and tables, enter rec
 - [Links between tables](07-links-between-tables.md)
 - [Lookup, count and rollup](08-lookup-count-and-rollup.md)
 - [Formulas](09-formulas.md)
-- [Attachments](10-attachments.md)
-- [Rich text](11-rich-text.md)
-- [An expanded record](12-an-expanded-record.md)
-- [Views](13-views.md)
-- [Filter](14-filter.md)
-- [Sort](15-sort.md)
-- [Grouping](16-grouping.md)
-- [Record colours](17-record-colours.md)
-- [Summaries under columns](18-summaries-under-columns.md)
-- [Searching a view](19-searching-a-view.md)
-- [Selecting, copying and pasting](20-selecting-copying-and-pasting.md)
-- [Undo](21-undo.md)
-- [Import from CSV and Excel](22-import-from-csv-and-excel.md)
-- [Export to CSV and Excel](23-export-to-csv-and-excel.md)
-- [Kanban](24-kanban.md)
-- [Forms](25-forms.md)
-- [Automations](26-automations.md)
-- [Interfaces](27-interfaces.md)
-- [Outgoing addresses](28-outgoing-addresses.md)
-- [Quick jump](29-quick-jump.md)
-- [Working together](30-working-together.md)
-- [Account security](31-account-security.md)
-- [Administering the organization](32-administering-the-organization.md)
-- [API for integrations](33-api-for-integrations.md)
-- [Accessibility](34-accessibility.md)
-- [About](35-about.md)
-- [Theme](36-theme.md)
-- [Interface language](37-interface-language.md)
+- [Formula function reference](10-formula-function-reference.md)
+- [Attachments](11-attachments.md)
+- [Rich text](12-rich-text.md)
+- [An expanded record](13-an-expanded-record.md)
+- [Views](14-views.md)
+- [Filter](15-filter.md)
+- [Sort](16-sort.md)
+- [Grouping](17-grouping.md)
+- [Record colours](18-record-colours.md)
+- [Summaries under columns](19-summaries-under-columns.md)
+- [Searching a view](20-searching-a-view.md)
+- [Selecting, copying and pasting](21-selecting-copying-and-pasting.md)
+- [Undo](22-undo.md)
+- [Import from CSV and Excel](23-import-from-csv-and-excel.md)
+- [Export to CSV and Excel](24-export-to-csv-and-excel.md)
+- [Kanban](25-kanban.md)
+- [Forms](26-forms.md)
+- [Automations](27-automations.md)
+- [Interfaces](28-interfaces.md)
+- [Outgoing addresses](29-outgoing-addresses.md)
+- [Quick jump](30-quick-jump.md)
+- [Working together](31-working-together.md)
+- [Account security](32-account-security.md)
+- [Administering the organization](33-administering-the-organization.md)
+- [API for integrations](34-api-for-integrations.md)
+- [Accessibility](35-accessibility.md)
+- [About](36-about.md)
+- [Theme](37-theme.md)
+- [Interface language](38-interface-language.md)

@@ -1,7 +1,7 @@
 ---
 title: "Пользователи и права администратора"
-description: "bash   docker compose run --rm migrate user instance-admin --email admin2@example.ru   docker compose run --rm migrate user instance-admin --email admin2@example.ru --revoke   "
-version: "v0.8.0"
+description: "bash   docker compose run --rm migrate user instance-admin --email admin2@example.com   docker compose run --rm migrate user instance-admin --email admin2@example.com --revoke   "
+version: "v0.9.0"
 lang: "ru"
 order: 6
 ---
@@ -9,8 +9,8 @@ order: 6
 - **Администратор инстанса** управляет лицензией, копиями, настройками инстанса и фоновыми миграциями. Первый администратор получает эти права при установке. Другому администратору организации их выдаёт только консоль сервера:
 
   ```bash
-  docker compose run --rm migrate user instance-admin --email admin2@example.ru
-  docker compose run --rm migrate user instance-admin --email admin2@example.ru --revoke
+  docker compose run --rm migrate user instance-admin --email admin2@example.com
+  docker compose run --rm migrate user instance-admin --email admin2@example.com --revoke
   ```
 
   Страница «Инстанс» откроется, когда у администратора подключён второй фактор.

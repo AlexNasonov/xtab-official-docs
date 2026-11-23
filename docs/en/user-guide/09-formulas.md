@@ -1,7 +1,7 @@
 ---
 title: "Formulas"
 description: "A Formula field computes a value from other fields of the record, for example {Price} * {Quantity}."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "en"
 order: 9
 ---
@@ -28,14 +28,9 @@ A formula recounts by itself when the fields it depends on change. In a big tabl
 
 ![The values of a formula](img/formula.png)
 
-The functions are the ones you know from Excel and Airtable:
+If a formula, a lookup or a rollup gives a number, the **Edit field** window lets you choose how to show it: **Format** — **Number**, **Currency** or **Percent**, and **Decimal places** — then every value has the same number of places (**As computed** — as many as it has). For a currency choose the currency and, if needed, clear **Show the currency sign**. A percent shows a share: `0.5` is 50 %. The summaries under the column take the same format. For a formula, the line **On the selected record:** in this window shows the value in the chosen format at once. This is only how it looks: the values, filters, sorting and export do not change.
 
-- arithmetic and rounding: `ROUND`, `SUM`, `AVERAGE`;
-- conditions: `IF`, `SWITCH`, `AND`, `OR`;
-- text: `CONCATENATE`, `LEFT`, `UPPER`, `SUBSTITUTE`;
-- dates in the time zone of your organization: `TODAY`, `DATEADD`, `DATETIME_DIFF`, `DATETIME_FORMAT`, `WORKDAY`;
-- lists: `ARRAYJOIN`, `ARRAYUNIQUE`;
-- regular expressions: `REGEX_MATCH`.
+The functions are the ones you know from Excel and Airtable: `IF`, `ROUND`, `SUM`, `CONCATENATE`, `DATEADD`, `WORKDAY`, `ARRAYJOIN`, `REGEX_MATCH` and more. Every function with an example is in the section «Formula function reference» below.
 
 You can filter, sort, group and summarize by the result of a formula. A formula can also be the primary field, so that records are named by its value.
 

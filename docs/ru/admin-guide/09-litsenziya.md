@@ -1,7 +1,7 @@
 ---
 title: "Лицензия"
 description: "bash   docker compose run --rm migrate license install /путь/к/файлу.license   docker compose run --rm migrate license show   "
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 9
 ---

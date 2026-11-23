@@ -1,7 +1,7 @@
 ---
 title: "Резервные копии и восстановление"
 description: "Установка копирует себя сама:"
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 7
 ---
@@ -29,13 +29,38 @@ docker compose exec xtab-worker xtab backup now      # полная копия �
 docker compose exec xtab-worker xtab backup status   # последние копии и отставание журнала
 ```
 
+## Перенос копий на отдельное S3
+
+Если установка уже работает, а копии лежат в хранилище файлов, перенесите их на S3 другой машины или другого провайдера. Обновление установщиком ответы не меняет: оно берёт их из `install.toml` в каталоге установки, поэтому настройки правятся вручную. Создайте в новом S3 bucket и ключ с правами на чтение, запись, удаление, список объектов и составную загрузку в этот bucket. Затем, из каталога установки, от root:
+
+1. Положите ключи в `secrets/` так, чтобы они не попали в историю команд, и пустой файл сертификата (в него — сертификат вашего центра сертификации в PEM, если он не публичный):
+
+   ```bash
+   read -rs -p 'Access key: ' K && printf '%s' "$K" > secrets/backup_s3_access_key && unset K; echo
+   read -rs -p 'Secret key: ' K && printf '%s' "$K" > secrets/backup_s3_secret_key && unset K; echo
+   : > secrets/backup_s3_ca.pem
+   chmod 644 secrets/backup_s3_access_key secrets/backup_s3_secret_key secrets/backup_s3_ca.pem
+   ```
+
+2. В `.env` добавьте `docker-compose.backup-s3.yml` в `COMPOSE_FILE` (после `docker-compose.s3.yml`, если он есть) и укажите `XTAB_BACKUP_S3_ENDPOINT` (с `https://`), `XTAB_BACKUP_S3_REGION` и `XTAB_BACKUP_BUCKET`; для своего центра сертификации — `XTAB_BACKUP_S3_CA_FILE=/run/secrets/backup_s3_ca`.
+3. В `install.toml` каталога установки заполните раздел `[backup]` теми же значениями (`endpoint`, `region`, `bucket`, `access_key_file`, `secret_key_file` — полные пути к копиям ключей вне каталога установки). Следующее обновление проверит новое хранилище пробным объектом.
+4. Примените настройки и сразу снимите полную копию: в новом хранилище её ещё нет, и восстановить установку на момент до неё нельзя.
+
+   ```bash
+   docker compose up -d
+   docker compose exec xtab-worker xtab backup now
+   docker compose exec xtab-worker xtab backup status
+   ```
+
+Файлы баз узел копирует в первом раунде после запуска, затем раз в час; счётчик скопированных — метрика `xtab_backup_files_copied_total`. Прежний bucket копий храните, пока в новом не накопится цепочка на весь срок восстановления.
+
 ## Восстановление на момент времени
 
 ```bash
 sudo ./restore.sh --to-time 2026-11-08T10:00:00Z
 ```
 
-Без `--to-time` установка возвращается к последнему отправленному сегменту журнала. Сценарий:
+Без `--to-time` установка возвращается к последнему отправленному сегменту журнала. Сценарий запускается от root: ключ резервных копий `secrets/backup_key` читает только root. Если ключ хранится отдельно от сервера, укажите его полный путь: `sudo ./restore.sh --key /media/keys/backup_key`. Сценарий:
 
 1. останавливает узлы;
 2. проверяет подписи и расшифровывает копию;

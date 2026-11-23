@@ -1,12 +1,12 @@
 ---
 title: "Руководство пользователя xtab"
 description: "Как работать с xtab: войти, завести рабочее пространство, базу и таблицы, вносить записи, настраивать поля и представления, искать, переносить данные из таблиц Excel и обратно."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 0
 ---
 
-Как работать с xtab: войти, завести рабочее пространство, базу и таблицы, вносить записи, настраивать поля и представления, искать, переносить данные из таблиц Excel и обратно. Руководство описывает версию 0.7 и пополняется с каждым выпуском.
+Как работать с xtab: войти, завести рабочее пространство, базу и таблицы, вносить записи, настраивать поля и представления, искать, переносить данные из таблиц Excel и обратно. Руководство описывает версию 0.9 и пополняется с каждым выпуском.
 
 ## Содержание
 
@@ -19,31 +19,32 @@ order: 0
 - [Связи между таблицами](07-svyazi-mezhdu-tablitsami.md)
 - [Подстановка, количество и сводка](08-podstanovka-kolichestvo-i-svodka.md)
 - [Формулы](09-formuly.md)
-- [Вложения](10-vlozheniya.md)
-- [Текст с форматированием](11-tekst-s-formatirovaniem.md)
-- [Запись целиком](12-zapis-tselikom.md)
-- [Представления](13-predstavleniya.md)
-- [Фильтр](14-filtr.md)
-- [Сортировка](15-sortirovka.md)
-- [Группировка](16-gruppirovka.md)
-- [Цвет записей](17-tsvet-zapisei.md)
-- [Итоги под колонками](18-itogi-pod-kolonkami.md)
-- [Поиск в представлении](19-poisk-v-predstavlenii.md)
-- [Выделение, копирование и вставка](20-vydelenie-kopirovanie-i-vstavka.md)
-- [Отмена действий](21-otmena-deistvii.md)
-- [Импорт из CSV и Excel](22-import-iz-csv-i-excel.md)
-- [Экспорт в CSV и Excel](23-eksport-v-csv-i-excel.md)
-- [Канбан](24-kanban.md)
-- [Формы](25-formy.md)
-- [Автоматизации](26-avtomatizatsii.md)
-- [Интерфейсы](27-interfeisy.md)
-- [Исходящие адреса](28-iskhodyashchie-adresa.md)
-- [Быстрый переход](29-bystryi-perekhod.md)
-- [Совместная работа](30-sovmestnaya-rabota.md)
-- [Безопасность учётной записи](31-bezopasnost-uchetnoi-zapisi.md)
-- [Администрирование организации](32-administrirovanie-organizatsii.md)
-- [API для интеграций](33-api-dlya-integratsii.md)
-- [Доступность](34-dostupnost.md)
-- [О программе](35-o-programme.md)
-- [Тема оформления](36-tema-oformleniya.md)
-- [Язык интерфейса](37-yazyk-interfeisa.md)
+- [Справочник функций формул](10-spravochnik-funktsii-formul.md)
+- [Вложения](11-vlozheniya.md)
+- [Текст с форматированием](12-tekst-s-formatirovaniem.md)
+- [Запись целиком](13-zapis-tselikom.md)
+- [Представления](14-predstavleniya.md)
+- [Фильтр](15-filtr.md)
+- [Сортировка](16-sortirovka.md)
+- [Группировка](17-gruppirovka.md)
+- [Цвет записей](18-tsvet-zapisei.md)
+- [Итоги под колонками](19-itogi-pod-kolonkami.md)
+- [Поиск в представлении](20-poisk-v-predstavlenii.md)
+- [Выделение, копирование и вставка](21-vydelenie-kopirovanie-i-vstavka.md)
+- [Отмена действий](22-otmena-deistvii.md)
+- [Импорт из CSV и Excel](23-import-iz-csv-i-excel.md)
+- [Экспорт в CSV и Excel](24-eksport-v-csv-i-excel.md)
+- [Канбан](25-kanban.md)
+- [Формы](26-formy.md)
+- [Автоматизации](27-avtomatizatsii.md)
+- [Интерфейсы](28-interfeisy.md)
+- [Исходящие адреса](29-iskhodyashchie-adresa.md)
+- [Быстрый переход](30-bystryi-perekhod.md)
+- [Совместная работа](31-sovmestnaya-rabota.md)
+- [Безопасность учётной записи](32-bezopasnost-uchetnoi-zapisi.md)
+- [Администрирование организации](33-administrirovanie-organizatsii.md)
+- [API для интеграций](34-api-dlya-integratsii.md)
+- [Доступность](35-dostupnost.md)
+- [О программе](36-o-programme.md)
+- [Тема оформления](37-tema-oformleniya.md)
+- [Язык интерфейса](38-yazyk-interfeisa.md)

@@ -1,18 +1,19 @@
 ---
 title: "Справочник команд"
 description: "Команды выполняются в каталоге установки. Служебные — через сервис migrate (docker compose run --rm migrate <команда>)."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 14
 ---
 
-Команды выполняются в каталоге установки. Служебные — через сервис `migrate` (`docker compose run --rm migrate <команда>`). Команды копий, хранилища и аудита — на узле фоновых задач (`docker compose exec xtab-worker xtab <команда>`).
+Команды выполняются в каталоге установки. Служебные — через сервис `migrate` (`docker compose run --rm migrate <команда>`). Команды копий, хранилища и выгрузки аудита — на узле фоновых задач (`docker compose exec xtab-worker xtab <команда>`), проверка аудита — на печатнике (`docker compose exec xtab-sealer xtab audit verify`).
 
 | Команда | Что делает |
 |---|---|
 | `doctor` | Диагностика окружения |
 | `config check` / `config show` | Проверить конфигурацию / показать итоговые значения без секретов |
 | `settings get` / `set` / `unset` | Настройки инстанса на всех узлах без перезапуска |
+| `org create --name <название> --admin <e-mail>` | Создать организацию установки и получить одноразовую ссылку для её администратора (установщик делает это сам). Установка работает в одной организации: если она уже создана, команда отказывает — новую ссылку администратору даёт `user access-link` |
 | `user access-link` / `reset-2fa` / `block` / `unblock` / `unlock` / `anonymize` / `instance-admin` | Учётные записи, когда панели недостаточно |
 | `license show` / `install <файл>` | Лицензия |
 | `backup now` / `status` / `checked` | Полная копия вне расписания, состояние копий, отметка о проверке восстановления |
@@ -23,4 +24,4 @@ order: 14
 | `db bootstrap-sql` | Скрипт начальной настройки для администратора внешней СУБД |
 | `debug realtime on` / `off` | Отладочный формат realtime на 24 часа |
 
-Ключи установщика `install.sh`: `--check`, `--answers <файл>`, `--yes`, `--reconfigure`, `--rollback`, `--restore`, `--drop-failed`, `--rotate-secrets`, `--uninstall`, `--purge`, `--dir`, `--lang`.
+Ключи установщика `install.sh`: `--check`, `--answers <файл>`, `--yes`, `--rollback`, `--restore [<копия>]`, `--drop-failed`, `--rotate-secrets`, `--uninstall`, `--purge [--confirm <домен>]`, `--dir`, `--lang`.

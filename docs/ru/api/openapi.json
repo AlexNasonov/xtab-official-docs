@@ -7,7 +7,7 @@
       "name": "LicenseRef-Proprietary",
       "identifier": "LicenseRef-Proprietary"
     },
-    "version": "0.8.0"
+    "version": "0.9.0"
   },
   "servers": [
     {
@@ -444,6 +444,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "second-factor-locked: слишком много неверных кодов подряд; второй фактор сбрасывает администратор организации",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1209,7 +1219,7 @@
             }
           },
           "202": {
-            "description": "Новый пароль задан; второй фактор — запросом `POST /auth/login/second-factor`",
+            "description": "Второй фактор — запросом `POST /auth/login/second-factor`; новый пароль задаётся, когда код верен",
             "content": {
               "application/json": {
                 "schema": {
@@ -2766,6 +2776,15 @@
             }
           },
           {
+            "name": "iss",
+            "in": "query",
+            "description": "Издатель ответа (RFC 9207); если указан, должен совпадать с провайдером входа.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "error",
             "in": "query",
             "description": "Ошибка провайдера.",
@@ -3835,6 +3854,109 @@
         }
       }
     },
+    "/instance/announcement": {
+      "put": {
+        "tags": [
+          "instance"
+        ],
+        "summary": "Задать объявление для всех пользователей установки: баннер над каждой страницей и на странице входа с начала до конца показа. Заменяет прежнее.",
+        "operationId": "set_announcement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Announcement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Объявление",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не администратор инстанса",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: текст или время",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "instance"
+        ],
+        "summary": "Снять объявление: баннер исчезнет со всех страниц в течение минуты.",
+        "operationId": "remove_announcement",
+        "responses": {
+          "204": {
+            "description": "Объявления нет"
+          },
+          "403": {
+            "description": "forbidden: не администратор инстанса",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/announcement": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Объявление администратора инстанса, которое ещё не закончилось (страница показывает его с начала), — для всех, в том числе для страницы входа. Страница спрашивает раз в минуту: ответ несёт свою метку, и `If-None-Match` с ней получает `304`.",
+        "operationId": "announcement",
+        "responses": {
+          "200": {
+            "description": "Объявление",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Объявления нет"
+          },
+          "304": {
+            "description": "Объявление с переданной меткой"
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
     "/workspaces": {
       "get": {
         "tags": [
@@ -4646,7 +4768,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Переименовать или описать таблицу либо выбрать поле, которое называет её записи (создатель базы).",
+        "summary": "Переименовать или описать таблицу, выбрать поле, которое называет её записи, или переставить её вкладку перед другой таблицей базы или после неё (создатель базы). Порядок вкладок общий для всех.",
         "operationId": "update_table",
         "parameters": [
           {
@@ -4701,7 +4823,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: имя занято или неверно, описание слишком длинное, первичное поле из другой таблицы или типа, который не называет записи",
+            "description": "validation-failed: имя занято или неверно, описание слишком длинное, первичное поле из другой таблицы или типа, который не называет записи, before и after вместе, соседа нет в этой базе",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4718,7 +4840,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Скопировать таблицу в её базе (создатель базы): поля, записи, связи, файлы и общие представления — такими, какие они в момент начала копирования; `202` с операцией, копия — в `object` операции после её успеха. Связь с другой таблицей получает в ней обратное поле с названием копии. Публичные ссылки форм и личные представления не копируются.",
+        "summary": "Скопировать таблицу в её базе (создатель базы): поля, записи, связи, файлы и общие представления — такими, какие они в момент начала копирования; `202` с операцией, копия — в `object` операции после её успеха. Связь с другой таблицей получает в ней встречное поле с названием копии. Публичные ссылки форм и личные представления не копируются.",
         "operationId": "copy_table",
         "parameters": [
           {
@@ -4774,6 +4896,74 @@
           },
           "422": {
             "description": "validation-failed: название",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/hidden": {
+      "put": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Скрыть таблицу из своей строки вкладок базы (любой, кто открывает базу): таблица остаётся в списке всех таблиц, в поиске и в API, а у других вкладки прежние. Повторное скрытие ничего не меняет.",
+        "operationId": "hide_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Скрыта"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Снова показать скрытую таблицу в своей строке вкладок. Показ нескрытой таблицы ничего не меняет.",
+        "operationId": "show_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Показана"
+          },
+          "404": {
+            "description": "not-found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4949,7 +5139,7 @@
             }
           },
           "202": {
-            "description": "Принято: новая формула проверяется и считается в фоне; `Location` — адрес операции",
+            "description": "Принято: новая формула или новое выражение либо условие сводки проверяется и считается в фоне; `Location` — адрес операции",
             "content": {
               "application/json": {
                 "schema": {
@@ -5325,7 +5515,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Переименовать общее представление или заменить его настройки (создатель базы): порядок, ширину и видимость колонок и высоту строк.",
+        "summary": "Переименовать общее представление, заменить его настройки — порядок, ширину и видимость колонок и высоту строк — или переставить его перед другим представлением таблицы или после него (создатель базы). Порядок представлений общий для всех.",
         "operationId": "update_view",
         "parameters": [
           {
@@ -5380,7 +5570,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: название или настройки",
+            "description": "validation-failed: название или настройки, before и after вместе, соседа нет в этой таблице",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5577,6 +5767,80 @@
           },
           "422": {
             "description": "validation-failed: название, триггер, условие, шаг или значение; или слишком много автоматизаций",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/duplicate": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Дублировать автоматизацию (создатель её базы): копия в той же таблице с названием исходной и пометкой копии — со второй копии с первым номером, которого нет у автоматизаций таблицы, копия копии нумеруется от исходного названия, — с тем же описанием, поводами, условием и шагами, проверенная как новая автоматизация. Копия выключена, её владелец — тот, кто дублирует. Значения секретов не копируются — шаги сохраняют их имена, значения задаются заново, — как и журнал запусков и версии: у копии первая версия.",
+        "operationId": "duplicate_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "Автоматизация, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Ключ безопасного повтора: тот же запрос с ним в течение 24 часов получает сохранённый ответ и не выполняется снова; до 64 видимых символов ASCII",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Копия, выключена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: поле или форма, на которые ссылается автоматизация, удалены, или автоматизаций слишком много",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6274,6 +6538,140 @@
           },
           "404": {
             "description": "not-found: нет такой автоматизации или секрета",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/automation-tests": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Проверить шаги автоматизации — сохранённой или нет, включённой или нет — на записи (создатель базы). Сервер выполняет их так, как выполнил бы запуск, правами владельца: HTTP-запросы уходят по-настоящему, через политику «Исходящие адреса»; изменения записей и письма только показываются — ничего не записывается и не отправляется, журнал запусков не пополняется. У человека — одна проверка одновременно и десять в минуту, у организации — сто в час; результат хранится час, и читает его только автор.",
+        "operationId": "create_test",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "База, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationTestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Поставлено в очередь",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationTest"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: не создатель базы; read-only-mode",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: база, автоматизация не этой базы, запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "test-running: предыдущая проверка не закончена",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: описание, как при сохранении",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, с Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automation-tests/{test}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Проверка автоматизации: её шаги на этот момент (тот, кто её запустил, в течение часа).",
+        "operationId": "get_test",
+        "parameters": [
+          {
+            "name": "test",
+            "in": "path",
+            "description": "Проверка, `tst_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Проверка",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationTest"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: чужая или старше часа",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9606,6 +10004,16 @@
               }
             }
           },
+          "409": {
+            "description": "already-uploaded: другой запрос той же загрузки завершился раньше, остаётся его файл",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "413": {
             "description": "too-large",
             "content": {
@@ -9733,7 +10141,7 @@
             }
           },
           "403": {
-            "description": "forbidden или step-up-required для больше 1000 записей",
+            "description": "forbidden или step-up-required для больше 1000 записей или когда их не удалось сосчитать вовремя",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10026,6 +10434,16 @@
           },
           "408": {
             "description": "request-timeout: байты перестали приходить или шли слишком медленно",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "already-uploaded: другой запрос той же загрузки завершился раньше, остаётся его файл",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11107,7 +11525,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Сохранить черновик интерфейса целиком (создатель базы): он проверяется по таблицам базы; пользователи видят его только после публикации.",
+        "summary": "Сохранить черновик интерфейса целиком (создатель базы): он проверяется по таблицам базы; пользователи видят его только после публикации. Каждое сохранение увеличивает номер черновика на 1; сохранение, сделанное по более старому номеру, отклоняется, поэтому две вкладки или два создателя не затирают работу друг друга.",
         "operationId": "save_draft",
         "parameters": [
           {
@@ -11162,7 +11580,7 @@
             }
           },
           "409": {
-            "description": "conflict: черновик уже сохранён другим запросом",
+            "description": "draft-changed: черновик сохранили после версии, на которой сделана правка, — в другой вкладке или другой создатель базы",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11189,7 +11607,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Опубликовать черновик интерфейса (создатель базы): он заново проверяется по таблицам базы, после чего его видят пользователи.",
+        "summary": "Опубликовать черновик интерфейса (создатель базы): он заново проверяется по таблицам базы, затем пользователи видят его — ровно проверенную версию; черновик, сохранённый за это время, не публикуется.",
         "operationId": "publish_interface",
         "parameters": [
           {
@@ -11225,6 +11643,16 @@
           },
           "404": {
             "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "draft-changed: черновик сохранили после его проверки — в другой вкладке или другой создатель базы; ничего не опубликовано",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11655,7 +12083,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: фильтр; представление",
+            "description": "validation-failed: фильтр; представление; view-too-heavy: не удалось сосчитать вовремя",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11765,7 +12193,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: фильтр, группы или итоги; представление",
+            "description": "validation-failed: фильтр, группы или итоги; представление; view-too-heavy: не удалось сосчитать вовремя",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11881,7 +12309,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Создать записи через элемент (его пользователь с уровнем «работа», если элемент разрешает создание): только редактируемые в нём поля.",
+        "summary": "Создать записи через элемент (его пользователь с уровнем «работа», если элемент разрешает создание): только редактируемые в нём поля. Поле, для которого обязательный фильтр оставляет одно значение («равно», «я», один вариант «любой из»), получает это значение, если оно не передано, — и поле, которое элемент не даёт менять: запись остаётся среди показываемых им. `before` и `after` — только если элемент разрешает менять порядок и только показываемая им запись.",
         "operationId": "element_create_records",
         "parameters": [
           {
@@ -11966,7 +12394,7 @@
             }
           },
           "403": {
-            "description": "forbidden: элемент этого не разрешает или уровень — «просмотр»",
+            "description": "forbidden: элемент этого не разрешает — или, с `before` или `after`, не разрешает менять порядок — или уровень — «просмотр»",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11976,7 +12404,7 @@
             }
           },
           "404": {
-            "description": "not-found: интерфейс или элемент",
+            "description": "not-found: интерфейс или элемент; запись `before` или `after` не из показываемых элементом",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12256,6 +12684,126 @@
         }
       }
     },
+    "/interfaces/{interface}/elements/{element}/records/move": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "Переместить записи через элемент (его пользователь с уровнем «работа», если элемент разрешает менять порядок): сразу перед записью или после неё либо в конец — в ручном порядке таблицы, общем для всех её представлений и элементов. Только показываемые элементом записи и только рядом с показываемой им записью.",
+        "operationId": "element_move_records",
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "Номер элемента",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` или `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` записывает числа строками.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — черновик: создатель базы пробует его до публикации.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Перемещённые записи с полями, которые показывает элемент",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: элемент не разрешает менять порядок или уровень — «просмотр»",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: интерфейс или элемент; перемещаемая запись или запись, рядом с которой они встают, не из показываемых элементом",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: элемент больше не подходит своей таблице",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` с ошибкой или повторяется, `before` вместе с `after`, место — перемещаемая запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/interfaces/{interface}/elements/{element}/summary": {
       "post": {
         "tags": [
@@ -12354,7 +12902,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: фильтр (только поля, которые предлагают его фильтры); представление или поиск",
+            "description": "validation-failed: фильтр (только поля, которые предлагают его фильтры); представление или поиск; view-too-heavy: не удалось сосчитать вовремя",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12456,7 +13004,7 @@
             }
           },
           "403": {
-            "description": "forbidden: уровень — «просмотр»",
+            "description": "forbidden: уровень «просмотр»; удаление, которое элемент не разрешает",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12486,7 +13034,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: `record` не передана или не ожидается; `fields.<ключ>` — поле, которое на странице не заполняется; значения — как у записей; `values` — значение не вычислилось",
+            "description": "validation-failed: `record` не передан или не ожидается; `fields` — любое значение: поля страницы отправляют формы; значения — как у записей; `values` — значение не вычислилось; `wrong-element` — кнопка открывает форму",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12497,6 +13045,349 @@
           },
           "429": {
             "description": "rate-limited: то же нажатие меньше 2 с назад",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/interfaces/{interface}/elements/{element}/submit": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "Отправить форму (её пользователь с уровнем «работа»): форма новой записи создаёт запись в своей таблице, форма изменения пишет поля, которые человек изменил в записи, выбранной в её элементе с записями. Принимаются только поля, которые форма разрешает менять; показанные обязательные поля должны быть заполнены, скрытые условием не принимают значений.",
+        "operationId": "element_submit_form",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Ключ безопасного повтора: тот же запрос с ним в течение 24 часов получает сохранённый ответ и не выполняется снова; до 64 видимых символов ASCII",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "Номер формы",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` или `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` записывает числа строками.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — черновик: создатель базы пробует его до публикации.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubmit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Запись изменена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSubmitted"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Запись создана",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSubmitted"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: уровень «просмотр» или форма только показывает запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: интерфейс, форма или запись среди тех, что показывает её элемент с записями",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: форма или её элемент больше не подходят своей таблице",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "precondition-failed: поля тем временем изменились; `errors[].record`, `errors[].field` и текущие записи `current`",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreconditionFailed"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: по `fields.<ключ>` — `not-in-form`, `read-only`, `hidden-question`, `required` и ошибки значений; `record` или `via` не ожидаются или не переданы; `values` — значение формы не вычислилось; из элемента с фильтрами — `outside-filter` у значения, которое они не допускают, `outside-element` у полей, из-за условий которых запись не попадёт в элемент",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/interfaces/{interface}/elements/{element}/fields/{field}/choices": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "Записи, которые можно выбрать в поле «Связь», изменяемом через элемент (его пользователь с уровнем «работа»): записи связанной таблицы в её ручном порядке, у каждой — текст первичного поля, поиск — только по нему; связь должна быть изменяемой в элементе. Условие выбора поля сужает их по значениям записи, которые показывает элемент: изменяемые в элементе — из `values`, остальные — из сохранённой записи; поле, которого элемент не показывает, считается пустым. Форма новой записи следует фильтрам элемента, из которого она открыта (`via`), а без него — первого элемента её страницы, который создаёт в ней записи: предлагает только записи, которые они оставляют, и называет среди них записи из `check`.",
+        "operationId": "element_link_choices",
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "Номер элемента: форма, таблица, список, канбан или карточка",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…` поля «Связь», изменяемого в элементе",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` или `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` записывает числа строками.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — черновик: создатель базы пробует его до публикации.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkChoices"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Кандидаты",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Choices"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: интерфейс, элемент, поле — не связь, изменяемая в элементе, уровень «просмотр» или запись среди тех, что показывает элемент",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: элемент больше не подходит своей таблице",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `values`, `search`, `limit`, `offset` или `check` вне лимитов, `via` — wrong-element: элемент не создаёт записи в этой форме; choices-too-heavy: не найдены вовремя",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fields/{field}/choices": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "Записи, которые можно выбрать в поле «Связь» (участник базы, читающий его таблицу): записи связанной таблицы, которые оставляет условие выбора поля при значениях записи, в ручном порядке этой таблицы, у каждой — текст первичного поля; какие из уже выбранных связей условию больше не подходят; какие поля записи, оставаясь пустыми, не дают условию сузить список. Длинный список приходит порциями: следующая начинается с `offset`.",
+        "operationId": "link_choices",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…` поля «Связь»",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkChoices"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Кандидаты",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Choices"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: поле, поле не типа «Связь», запись",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `values`, `search`, `limit`, `offset` или `check` сверх лимитов, ключ `values`, не являющийся полем таблицы, значение неверного типа; choices-too-heavy: не отобрали вовремя",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12629,6 +13520,10 @@
           "delete": {
             "type": "boolean",
             "description": "Удалять записи."
+          },
+          "reorder": {
+            "type": "boolean",
+            "description": "Перемещать записи в ручном порядке таблицы, общем для всех представлений и элементов, — только у сетки и списка и только пока их не упорядочивает сортировка."
           }
         },
         "additionalProperties": false
@@ -12690,6 +13585,29 @@
         },
         "additionalProperties": false
       },
+      "Announcement": {
+        "type": "object",
+        "description": "Объявление администратора инстанса: баннер, который каждый пользователь видит с начала до конца показа, в том числе на странице входа. Текст выводится как текст.",
+        "required": [
+          "text",
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст: от 1 до 500 символов, переводы строк допустимы."
+          },
+          "starts_at": {
+            "type": "string",
+            "description": "Начало показа, RFC 3339."
+          },
+          "ends_at": {
+            "type": "string",
+            "description": "Окончание показа, RFC 3339: позже начала и текущего момента."
+          }
+        }
+      },
       "AnonymizeInput": {
         "type": "object",
         "description": "Удаление учётной записи по запросу человека (`POST /org/users/{user}/anonymize`): её повторно введённый e-mail подтверждает, какая это учётная запись.",
@@ -12705,7 +13623,7 @@
       },
       "AssignInput": {
         "type": "object",
-        "description": "Поле и его значение: выражение языка формул над записью, запустившей автоматизацию, например `{Сумма} * 1.2` или `WORKDAY(TODAY(), 3)`.",
+        "description": "Поле и его значение: выражение языка формул над записью, запустившей автоматизацию, например `{Сумма} * 1.2` или `WORKDAY(TODAY(), 3)`. После HTTP-запроса оно может читать его ответ: `STEP(1, \"$.body.suggestions[0].value\")` — номер шага с 1 и путь в теле ответа, `$.status` или `$.error`.",
         "required": [
           "field",
           "value"
@@ -13144,6 +14062,233 @@
           "auto_disabled"
         ]
       },
+      "AutomationTest": {
+        "type": "object",
+        "description": "Проверка автоматизации и её шаги на этот момент. Хранится час, видит её только тот, кто её запустил.",
+        "required": [
+          "id",
+          "table",
+          "record",
+          "status",
+          "created_at",
+          "steps"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tst_…`."
+          },
+          "automation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Проверяемая автоматизация, `aut_…`, если она сохранена."
+          },
+          "table": {
+            "type": "string",
+            "description": "Таблица триггера, `tbl_…`."
+          },
+          "record": {
+            "type": "string",
+            "description": "Запись, `rec_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationTestStatus",
+            "description": "На каком этапе."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Почему проверка не смогла выполниться."
+          },
+          "condition_met": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Подходит ли запись под условие автоматизации; нет значения — условия нет. Шаги выполняются в любом случае."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Когда запущена, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Когда завершилась, RFC 3339."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationTestStep"
+            },
+            "description": "Выполненные на этот момент шаги по порядку; после окончания — все шаги."
+          }
+        }
+      },
+      "AutomationTestInput": {
+        "type": "object",
+        "description": "Проверка автоматизации на записи: шаги описания — сохранённого или нет — сервер выполняет на этой записи. Запросы уходят по-настоящему, через политику «Исходящие адреса»; изменения записей и письма только показываются, ничего не записывается и не отправляется.",
+        "required": [
+          "table",
+          "definition",
+          "record"
+        ],
+        "properties": {
+          "automation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Проверяемая автоматизация, `aut_…`, если она сохранена: используются права её владельца."
+          },
+          "table": {
+            "type": "string",
+            "description": "Таблица её триггера, `tbl_…`, — таблица этой базы."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "Проверяемое описание; проверяется так же, как при сохранении."
+          },
+          "record": {
+            "type": "string",
+            "description": "Запись таблицы, на которой выполняются шаги, `rec_…`."
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerKind",
+                "description": "Повод, который изображает проверка, — один из видов описания: его возвращает `TRIGGER()`. Если не указан — первый из них."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationTestStatus": {
+        "type": "string",
+        "description": "Состояние проверки.",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ]
+      },
+      "AutomationTestStep": {
+        "type": "object",
+        "description": "Шаг проверки: что он отправил и получил, что записал или отправил бы.",
+        "required": [
+          "number",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Его номер, с 1.",
+            "minimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "`update_record`, `create_record`, `send_email` или `http_request`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationTestStepStatus",
+            "description": "Чем он закончился."
+          },
+          "continued": {
+            "type": "boolean",
+            "description": "Запрос не удался, а запуск продолжается: следующие шаги выполнены."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Почему не удался, с местом."
+          },
+          "duration_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Сколько длился, в миллисекундах.",
+            "minimum": 0
+          },
+          "request": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestRequest",
+                "description": "Отправленный запрос."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestResponse",
+                "description": "Полученный ответ."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestValue"
+            },
+            "description": "Значения из ответов предыдущих шагов, которые шаг прочитал функцией `STEP`."
+          },
+          "letter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestLetter",
+                "description": "Письмо, которое шаг отправил бы."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "record": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestRecord",
+                "description": "Запись, которую шаг изменил бы или создал."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "AutomationTestStepStatus": {
+        "type": "string",
+        "description": "Чем закончился шаг проверки.",
+        "enum": [
+          "done",
+          "failed",
+          "unknown",
+          "not_run"
+        ]
+      },
       "AutomationsPolicyBody": {
         "type": "object",
         "description": "Автоматизации организации: сколько журнал запусков хранит запуск.",
@@ -13212,6 +14357,13 @@
           "role": {
             "type": "string",
             "description": "Роль пользователя в базе: старшая из его ролей в ней и в её рабочем пространстве."
+          },
+          "hidden": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Таблицы (`tbl_…`), которые пользователь скрыл из своей строки вкладок, в порядке таблиц. Только вид базы для него: таблицы остаются в `tables`, другие этот выбор не видят. Нет поля — скрытых нет."
           }
         }
       },
@@ -13453,6 +14605,43 @@
                 ]
               }
             }
+          },
+          {
+            "type": "object",
+            "description": "Открывает форму страницы в окне: новой записи или выбранной записи — для изменения или просмотра. Для формы выбранной записи `record_of` кнопки должен совпадать с `record_of` формы. На сервере не нажимается: форма читает и отправляет запись сама.",
+            "required": [
+              "form",
+              "kind"
+            ],
+            "properties": {
+              "form": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Номер формы.",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "open_form"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Удаляет запись, выбранную в `record_of`, после подтверждения, если этот элемент разрешает удалять записи.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "delete_record"
+                ]
+              }
+            }
           }
         ],
         "description": "Что делает нажатие кнопки."
@@ -13523,6 +14712,24 @@
         },
         "additionalProperties": false
       },
+      "Choice": {
+        "type": "object",
+        "description": "Кандидат связи.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…` связанной записи."
+          },
+          "name": {
+            "type": "string",
+            "description": "Текст её первичного поля в формате поля."
+          }
+        }
+      },
       "ChoiceInput": {
         "type": "object",
         "description": "Вариант поля «один из списка» или «несколько из списка». Без `id` — новый.",
@@ -13568,6 +14775,52 @@
           "color": {
             "type": "string",
             "description": "Цвет."
+          }
+        }
+      },
+      "Choices": {
+        "type": "object",
+        "description": "Записи, которые можно выбрать в связи, в ручном порядке связанной таблицы.",
+        "required": [
+          "data",
+          "more"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            },
+            "description": "Кандидаты."
+          },
+          "more": {
+            "type": "boolean",
+            "description": "Есть ещё: следующая порция начинается с `offset` плюс число отданных кандидатов, поиск сужает список."
+          },
+          "outside": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` из `check`, которые не подходят под условие выбора поля."
+          },
+          "unset": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`fld_…` записи, из-за пустоты которых условие не сужает список."
+          },
+          "narrowed": {
+            "type": "boolean",
+            "description": "Сузило ли условие выбора список хотя бы частично."
+          },
+          "checked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            },
+            "description": "Через форму новой записи: записи из `check`, которые есть среди кандидатов, с текстом их первичного поля — имена записей, которые фильтры формы удерживают в связи."
           }
         }
       },
@@ -13670,6 +14923,32 @@
           "skip": {
             "type": "boolean",
             "description": "В новую таблицу: колонка не импортируется."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColumnSpec": {
+        "type": "object",
+        "description": "Колонка строки: элементы сверху вниз, каждый шириной в колонку.",
+        "required": [
+          "width",
+          "elements"
+        ],
+        "properties": {
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Колонок из 12, от 1 до 12.",
+            "minimum": 0
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "Номера её элементов сверху вниз; может быть пусто."
           }
         },
         "additionalProperties": false
@@ -13877,19 +15156,32 @@
         "type": "object",
         "description": "Что делает автоматизация: когда запускается, для каких записей и какие шаги выполняет по порядку.",
         "required": [
-          "trigger",
           "steps"
         ],
         "properties": {
+          "triggers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerInput"
+            },
+            "description": "Что запускает автоматизацию: любой из поводов, от 1 до 5 поводов разных видов — поля `record_updated` перечисляются в одном поводе. Одно изменение записи запускает автоматизацию не больше одного раза; шаги узнают вид сработавшего повода функцией `TRIGGER()`."
+          },
           "trigger": {
-            "$ref": "#/components/schemas/TriggerInput",
-            "description": "Что запускает автоматизацию."
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerInput",
+                "description": "Один повод — так его передают клиенты, написанные до `triggers`: принимается как список из одного. Не передаётся вместе с `triggers` и не возвращается в ответе."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "condition": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/FilterInput",
-                "description": "Запуск идёт только для записи, которая ему соответствует: фильтр, как у представлений, по полям таблицы триггера. Обязательно для `record_matches`."
+                "description": "Запуск идёт только для записи, которая ему соответствует, по какому бы поводу он ни начался: фильтр, как у представлений, по полям таблицы поводов. Обязательно для `record_matches`."
               },
               {
                 "type": "null"
@@ -13954,10 +15246,11 @@
       },
       "Direction": {
         "type": "string",
-        "description": "Направление ключа сортировки; пустые значения в любом случае последние.",
+        "description": "Направление ключа сортировки или уровня группировки; пустые значения в любом случае последние. `linked_order` — только уровень группировки по связи: в ручном порядке записей связанной таблицы.",
         "enum": [
           "asc",
-          "desc"
+          "desc",
+          "linked_order"
         ]
       },
       "DraftInput": {
@@ -13979,6 +15272,57 @@
           }
         },
         "additionalProperties": false
+      },
+      "ElementColumnSpec": {
+        "type": "object",
+        "description": "Ширина колонки сетки.",
+        "required": [
+          "field",
+          "width"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`: одно из полей, которые показывает сетка."
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Ширина в CSS-пикселях, 60…600.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "ElementFormRules": {
+        "type": "object",
+        "description": "Что фильтр представления элемента с записями требует от формы, в которой открываются его новые записи.",
+        "required": [
+          "element",
+          "rules"
+        ],
+        "properties": {
+          "element": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Номер элемента.",
+            "minimum": 0
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldRule"
+            },
+            "description": "Правила по полям."
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RulePerson"
+            },
+            "description": "Люди, которых форма предлагает или оставляет в своих полях пользователей по этим правилам и обязательному фильтру элемента, — «один из», «фикс», «держит», без исключённых, — с их именами: только те, кого можно выбрать."
+          }
+        }
       },
       "ElementKindSpec": {
         "oneOf": [
@@ -14084,8 +15428,31 @@
             }
           },
           {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FormSpec",
+                "description": "Форма: новая запись своей таблицы или запись, выбранная в элементе с записями страницы, — для изменения или просмотра."
+              },
+              {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "form"
+                    ]
+                  }
+                }
+              }
+            ],
+            "description": "Форма: новая запись своей таблицы или запись, выбранная в элементе с записями страницы, — для изменения или просмотра."
+          },
+          {
             "type": "object",
-            "description": "Поля новой записи, которую отправляет кнопка «создать запись» страницы.",
+            "description": "Устарело: поля новой записи, которые отправляла кнопка «создать запись» той же таблицы на странице. Принимается в черновике и читается как форма новой записи над той же таблицей с теми же полями — кнопка, которая их отправляла, становится её кнопкой; в ответах не встречается.",
             "required": [
               "table",
               "fields",
@@ -14101,7 +15468,7 @@
                 "items": {
                   "$ref": "#/components/schemas/FieldRuleSpec"
                 },
-                "description": "Запрашиваемые поля."
+                "description": "Поля формы: отмеченные изменяемыми заполняются, остальные только показываются."
               },
               "kind": {
                 "type": "string",
@@ -14475,11 +15842,20 @@
           }
         }
       },
+      "FieldAccess": {
+        "type": "string",
+        "description": "Вид поля формы.",
+        "enum": [
+          "editable",
+          "read_only",
+          "required"
+        ]
+      },
       "FieldDefault": {
         "oneOf": [
           {
             "type": "object",
-            "description": "Значение в той форме, в какой его принимают записи поля: текст, число, `true`, `opt_…` или их список, дата, момент, `usr_…` или их список.",
+            "description": "Значение в той форме, в какой его принимают записи поля: текст, число, `true`, `opt_…` или их список, дата, момент, `usr_…` или их список. Вариант можно указать и по названию, в том числе новый вариант из того же запроса.",
             "required": [
               "value",
               "kind"
@@ -14728,6 +16104,137 @@
         },
         "additionalProperties": false
       },
+      "FormFieldRule": {
+        "type": "object",
+        "description": "Что фильтры требуют от поля формы новой записи: значение, которое оно получает, значения, которые оно может принимать, или проверку сервером при отправке формы. Варианты — `opt_…`, люди — `usr_…`, только те, кого можно выбрать; записи связей не сообщаются.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "fixed": {
+            "description": "Единственное значение поля в том виде, в каком его принимает запись; поле показывается только для чтения."
+          },
+          "one_of": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Значения, которые поле может принимать; одно из них обязательно."
+          },
+          "keeps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Значения, которые остаются в поле; к ним можно добавить другие."
+          },
+          "without": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Значения, убранные из выбора."
+          },
+          "filled": {
+            "type": "boolean",
+            "description": "Поле обязательное."
+          },
+          "empty": {
+            "type": "boolean",
+            "description": "Поле остаётся пустым."
+          },
+          "min": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RuleBound",
+                "description": "Наименьшее значение числа или даты."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RuleBound",
+                "description": "Наибольшее значение числа или даты."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "check": {
+            "type": "boolean",
+            "description": "Сервер проверяет запись при отправке формы: она ещё может получить отказ."
+          },
+          "contradiction": {
+            "type": "boolean",
+            "description": "Фильтры требуют того, чего не даёт ни одно значение: запись этой формы получит отказ."
+          }
+        }
+      },
+      "FormFieldSpec": {
+        "type": "object",
+        "description": "Поле формы.",
+        "required": [
+          "field",
+          "access"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` таблицы формы."
+          },
+          "access": {
+            "$ref": "#/components/schemas/FieldAccess",
+            "description": "`editable`, `read_only` или `required` (изменяемое и не отправляется пустым, пока показано); вычисляемые поля — только `read_only`, как и все поля формы `view`."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Формулировка вместо названия поля, до 500 символов."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Подсказка под полем, до 500 символов."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Показывается, только пока предыдущее поле формы отвечает этому условию."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Сколько колонок из 4 занимает поле, от 1 до 4: в более узкой форме — всю строку. Не задано в черновике — по виду поля: длинный текст, вложения и связи — 4, остальные — 1; в ответе есть всегда.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
       "FormInput": {
         "type": "object",
         "description": "Форма: заголовок, описание, вопросы и сообщение после отправки.",
@@ -14763,6 +16270,15 @@
         },
         "additionalProperties": false
       },
+      "FormMode": {
+        "type": "string",
+        "description": "Что форма делает с записью.",
+        "enum": [
+          "new",
+          "edit",
+          "view"
+        ]
+      },
       "FormSent": {
         "type": "object",
         "description": "Отправленная форма.",
@@ -14780,6 +16296,127 @@
             "description": "Что человек видит сейчас: сообщение формы или стандартная благодарность."
           }
         }
+      },
+      "FormSpec": {
+        "type": "object",
+        "description": "Форма страницы.",
+        "required": [
+          "mode",
+          "fields"
+        ],
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/FormMode",
+            "description": "`new` — заполняет новую запись таблицы `table`; `edit` — изменяет запись, выбранную в `record_of`; `view` — показывает её."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`tbl_…` новой записи; у `edit` и `view` нет."
+          },
+          "record_of": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Номер таблицы, списка или канбана страницы, чью выбранную запись форма изменяет или показывает; у новой записи — запись, над которой вычисляются её значения, если есть.",
+            "minimum": 0
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldSpec"
+            },
+            "description": "Поля формы в их порядке, от 1 до 100."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueSpec"
+            },
+            "description": "Значения, которые новая запись получает от самой формы: выражения над записью из `record_of`, без неё — константы; не в поля, которые заполняет человек."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Текст под заголовком, до 2000 символов."
+          },
+          "submit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Подпись кнопки отправки, до 200 символов; нет — стандартная."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Что человек увидит после отправки новой записи, до 2000 символов; нет — стандартный текст."
+          },
+          "window": {
+            "type": "boolean",
+            "description": "Только в окне: форма не стоит в ячейке страницы и открывается кнопкой или из записи."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSubmit": {
+        "type": "object",
+        "description": "Отправка формы (`POST /interfaces/{interface}/elements/{form}/submit`).",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…`: запись, которую изменяет форма `edit`, — выбранная в её элементе с записями; у формы новой записи с `record_of` — запись, над которой вычисляются её значения."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Значения по `fld_…` или имени: только поля, которые форма разрешает менять; `null` — пусто. Форма `edit` отправляет только поля, которые человек изменил."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Для формы `edit`: значения изменённых полей на момент, когда человек открыл запись; если какое-то из них с тех пор изменилось — `412` с текущей записью."
+          },
+          "via": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Номер элемента с записями, чей «+» открыл форму новой записи: новая запись следует его фильтрам. Без него — фильтрам первого элемента страницы формы, который создаёт в ней новые записи.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSubmitted": {
+        "type": "object",
+        "description": "Результат отправки формы.",
+        "required": [
+          "record"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…` созданной или изменённой записи."
+          }
+        },
+        "additionalProperties": false
       },
       "FormTask": {
         "type": "object",
@@ -15112,14 +16749,14 @@
               "string",
               "null"
             ],
-            "description": "Значение — шаблон в одну строку."
+            "description": "Значение — шаблон в одну строку, хранится открытым: ключ или пароль задаётся секретом."
           },
           "secret": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Или имя секрета автоматизации, значение которого отправляется."
+            "description": "Или имя секрета автоматизации, значение которого отправляется как всё значение заголовка, вместе с `Token …`."
           }
         },
         "additionalProperties": false
@@ -15138,6 +16775,7 @@
           "auto_create",
           "enabled",
           "redirect_uri",
+          "second_factor",
           "backchannel_logout_uri"
         ],
         "properties": {
@@ -15151,7 +16789,7 @@
           },
           "issuer": {
             "type": "string",
-            "description": "Издатель (issuer), как его называет сам провайдер: `https://sso.example.ru/realms/xtab`."
+            "description": "Издатель (issuer), как его называет сам провайдер: `https://sso.example.com/realms/xtab`."
           },
           "discovery_url": {
             "type": [
@@ -15187,6 +16825,17 @@
           "redirect_uri": {
             "type": "string",
             "description": "Адрес возврата, который регистрируется у провайдера."
+          },
+          "second_factor": {
+            "type": "boolean",
+            "description": "Провайдер подтверждает второй фактор: вход через него засчитывается вторым фактором администратора, если токен говорит об этом в `amr` или в [`IdentityProvider::factor_acr`]."
+          },
+          "factor_acr": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`acr` входа со вторым фактором; нет — решает `amr` токена."
           },
           "backchannel_logout_uri": {
             "type": "string",
@@ -15261,6 +16910,20 @@
               "null"
             ],
             "description": "Провайдер показан на странице входа."
+          },
+          "second_factor": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Провайдер подтверждает второй фактор; по умолчанию выключено."
+          },
+          "factor_acr": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`acr` входа со вторым фактором; пустой текст — нет."
           }
         },
         "additionalProperties": false
@@ -15990,6 +17653,17 @@
             },
             "description": "Поля, которые её элементы показывают, запрашивают или по которым фильтруют, с описанием для её пользователей — и для тех, кому выдан только интерфейс, а не его таблицы. Настройки, называющие другие поля или таблицы (текст формулы, поля подстановки и сводки, связанная таблица), не передаются; описание пустое."
           },
+          "form_rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ElementFormRules"
+            },
+            "description": "Что фильтр представления элемента с записями требует от полей формы, в которой открываются его новые записи: по элементам, только поля этой формы. Обязательный фильтр элемента и фильтры страницы — в самом описании."
+          },
+          "role": {
+            "type": "string",
+            "description": "Уровень, на котором человек работает в интерфейсе, один из трёх: `reader` — просматривает записи (в том числе комментатор базы), `editor` — работает с ними, `creator` — создатель или владелец базы."
+          },
           "created_at": {
             "type": "string",
             "description": "Создан, RFC 3339."
@@ -16185,7 +17859,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Домены e-mail, `example.ru`; пусто — любые. На эти домены могут уходить и письма автоматизаций."
+            "description": "Домены e-mail, `example.com`; пусто — любые. На эти домены могут уходить и письма автоматизаций."
           },
           "admins_only": {
             "type": "boolean",
@@ -16284,6 +17958,88 @@
           }
         }
       },
+      "LinkChoices": {
+        "type": "object",
+        "description": "Запрос записей, которые можно выбрать в связи (`POST …/fields/{field}/choices`).",
+        "properties": {
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` записи, в которой заполняется поле, если она уже есть."
+          },
+          "values": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Значения полей этой записи по `fld_…` или имени, в том числе ещё не сохранённые."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Текст, который содержит первичное поле кандидата, до 1000 символов."
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Сколько кандидатов вернуть, от 1 до 50; по умолчанию 20."
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Сколько кандидатов пропустить перед отданными, от 0 до 10000; по умолчанию 0: следующая порция списка начинается после уже показанных кандидатов."
+          },
+          "check": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` уже выбранных связанных записей, до 100; неподходящие перечисляются в `outside`."
+          },
+          "via": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Через форму новой записи: номер элемента с записями, из которого она открыта; его фильтры сужают кандидатов так же, как запись; без него — первый элемент страницы формы, который создаёт в ней записи. Через таблицу базы — не принимается.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListGroupSpec": {
+        "type": "object",
+        "description": "Как список группирует свои записи.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`: одно из полей, которые показывает список, не длинный и не форматированный текст."
+          },
+          "order": {
+            "$ref": "#/components/schemas/Direction",
+            "description": "`asc` (по умолчанию) или `desc`: порядок групп; пустые значения — в конце при любом порядке."
+          },
+          "collapsed": {
+            "type": "boolean",
+            "description": "Свёрнуты ли все группы при открытии."
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginBody": {
         "type": "object",
         "description": "Вход по e-mail и паролю.",
@@ -16355,6 +18111,13 @@
           "is_org_admin"
         ],
         "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`usr_…` учётной записи: её получает новая запись в списке с фильтром «я»."
+          },
           "display_name": {
             "type": "string",
             "description": "Отображаемое имя."
@@ -16687,6 +18450,14 @@
         },
         "additionalProperties": false
       },
+      "OnError": {
+        "type": "string",
+        "description": "Что делает запуск, когда HTTP-запрос окончательно не удался: код ответа не 2xx, ответ не JSON, нет ответа после повторов.",
+        "enum": [
+          "stop",
+          "continue"
+        ]
+      },
       "Operation": {
         "type": "object",
         "description": "Операция над структурой, выполняемая в фоне.",
@@ -16714,7 +18485,7 @@
               "string",
               "null"
             ],
-            "description": "Публичный id созданного объекта после успешного завершения."
+            "description": "Публичный id созданного или изменённого объекта после успешного завершения."
           },
           "error": {
             "type": [
@@ -16772,6 +18543,27 @@
             "description": "Звёзд рейтинга, 1–10 (по умолчанию 5).",
             "minimum": 0
           },
+          "show_time": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Показывать ли у моментов время (по умолчанию `true`): у даты со временем, времени создания или последнего изменения, формулы, подстановки или сводки с моментами. Без него момент показывается датой в часовом поясе пользователя. Это только вид: фильтры, сортировка, выгрузка и значения в API сохраняют момент целиком."
+          },
+          "number_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Как формула, подстановка или сводка показывает числа: `number` (по умолчанию), `currency` или `percent` (`0.5` — 50 %), с `precision` — знаками после запятой: по умолчанию у суммы два, у процента ни одного, у числа — как вычислено, — и у суммы с `currency`. Переданный формат задаёт вид целиком: не переданные знаки, валюта и знак валюты получают значения по умолчанию формата. Только вид: значения, фильтры, сортировка и выгрузка — число как вычислено. У других типов и у результата не-числа — `not-for-type`."
+          },
+          "show_currency_sign": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Показывать ли у сумм знак валюты (по умолчанию `true`): у поля валюты и у формулы, подстановки или сводки в формате `currency`. Без него сумма показывается с числом знаков поля и разделителями разрядов языка. Только вид."
+          },
           "choices": {
             "type": [
               "array",
@@ -16796,6 +18588,13 @@
             ],
             "description": "Связь не более чем с одной записью (по умолчанию — с несколькими)."
           },
+          "inverse_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Имя встречного поля, которое новая связь создаёт в связанной таблице, свободное там без учёта регистра. По умолчанию — имя этой таблицы, а если оно занято — «Таблица (Связь)» с именем новой связи, дальше — с номером. Только при добавлении связи с другой таблицей: у связи таблицы с самой собой встречного поля нет."
+          },
           "formula": {
             "type": [
               "string",
@@ -16808,21 +18607,28 @@
               "string",
               "null"
             ],
-            "description": "Поле связи этой же таблицы, через которое читают подстановка, количество связей или сводка по связи (`fld_…`); задаётся при добавлении поля и потом не меняется."
+            "description": "Поле связи этой же таблицы, через которое читают подстановка, количество связей или сводка по связи (`fld_…`); задаётся при добавлении поля и потом не меняется: другое значение отклоняется, прежнее принимается."
           },
           "lookup_field": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Поле связанной таблицы, которое показывает подстановка или сводит сводка по связи (`fld_…`): сводка берёт числа и тексты; задаётся при добавлении поля и потом не меняется."
+            "description": "Поле связанной таблицы, которое показывает подстановка или сводит сводка по связи (`fld_…`): сводка берёт числа и тексты; задаётся при добавлении поля и потом не меняется, как `link_field`."
           },
           "condition": {
             "type": [
               "object",
               "null"
             ],
-            "description": "Какие связанные записи сводит сводка по связи: фильтр по полям связанной таблицы, как фильтр представления; без него — все. Задаётся при добавлении поля."
+            "description": "Какие связанные записи сводит сводка по связи: фильтр по полям связанной таблицы, как фильтр представления; без него — все. Новое условие или выражение сводки пересчитывает её значения в фоне; `null` удаляет условие."
+          },
+          "choose": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Какие записи связанной таблицы предлагает выбрать поле «Связь»: дерево групп `and` / `or` из условий `{via?, field, op, value}` над полями связанной таблицы и таблиц дальше по её связям (`via` — поля «Связь» от связанной таблицы, не больше трёх связей вместе со сравниваемой), где `value` — значение, как в фильтре представления, или `{\"this\": {\"field\", \"via\"?}}` — значение поля «Связь» или «Пользователь» заполняемой записи, сравниваемое операторами `has_any_of` или `has_none_of` (`is_any_of` для поля одного пользователя); не больше 20 условий. Пустое значение записи список не сужает. Условие только сужает выбор: связи вне него по-прежнему записываются. `null` убирает условие."
           },
           "default": {
             "oneOf": [
@@ -16885,6 +18691,27 @@
             "description": "Звёзд рейтинга.",
             "minimum": 0
           },
+          "show_time": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`false` — моменты показываются датой без времени; нет поля — со временем."
+          },
+          "number_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Как формула, подстановка или сводка показывает числа: `currency` или `percent`; нет поля — как число."
+          },
+          "show_currency_sign": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`false` — суммы показываются без знака валюты; нет поля — со знаком."
+          },
           "choices": {
             "type": [
               "array",
@@ -16907,7 +18734,7 @@
               "string",
               "null"
             ],
-            "description": "Обратное поле связи в связанной таблице (`fld_…`); у связи таблицы с самой собой его нет."
+            "description": "Встречное поле связи в связанной таблице (`fld_…`); у связи таблицы с самой собой его нет."
           },
           "single": {
             "type": [
@@ -16954,6 +18781,17 @@
               "null"
             ],
             "description": "Какие связанные записи сводит сводка по связи — как фильтр представления; без него — все."
+          },
+          "choose": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Какие записи связанной таблицы предлагает выбрать поле «Связь», как задано; часть условия, называющая удалённое поле или таблицу, не показывается."
+          },
+          "choose_broken": {
+            "type": "boolean",
+            "description": "Часть `choose` называла удалённое поле или таблицу и не показывается: выбор шире, чем задан."
           },
           "default": {
             "oneOf": [
@@ -17210,7 +19048,7 @@
       },
       "PageSpec": {
         "type": "object",
-        "description": "Страница: строки ячеек на сетке из 12 колонок — 3 на окне средней ширины, 1 на узком; каждая ячейка показывает один из её элементов.",
+        "description": "Страница: строки на сетке из 12 колонок — 3 на окне средней ширины, 1 на узком. В строке либо ячейки, каждая показывает один из элементов страницы, либо 2–3 колонки, каждая показывает несколько элементов сверху вниз; высота колонки — по её содержимому.",
         "required": [
           "id",
           "name",
@@ -17243,7 +19081,7 @@
             "items": {
               "$ref": "#/components/schemas/ElementSpec"
             },
-            "description": "Её элементы; каждый стоит ровно в одной ячейке."
+            "description": "Её элементы; каждый стоит ровно в одной ячейке или колонке, форма «Только в окне» — ни в одной."
           }
         },
         "additionalProperties": false
@@ -17382,6 +19220,12 @@
             "type": "integer",
             "format": "int32",
             "description": "Сколько минут длится блокировка; 0 — до разблокировки администратором; до 43200.",
+            "minimum": 0
+          },
+          "max_sessions": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сессий учётной записи одновременно: новый вход завершает самую старую; 0 — без ограничения; до 100; 10, если не указано.",
             "minimum": 0
           }
         },
@@ -17544,7 +19388,7 @@
           },
           "fields": {
             "type": "object",
-            "description": "Для кнопки, создающей запись, на странице с элементом «поля записи» её таблицы: значения, которые заполнил человек, по `fld_…` или имени — только поля этого элемента."
+            "description": "Устарело: кнопки больше не отправляют поля страницы — форма отправляет свои. Любое значение отклоняется как `read-only`."
           }
         },
         "additionalProperties": false
@@ -17917,7 +19761,7 @@
               "string",
               "null"
             ],
-            "description": "Адреса через запятую, шаблон: `a@example.ru, {{ {Менеджер} }}`."
+            "description": "Адреса через запятую, шаблон: `a@example.com, {{ {Менеджер} }}`."
           }
         },
         "additionalProperties": false
@@ -18219,6 +20063,63 @@
               "minimum": 0
             },
             "description": "Номера фильтров страницы, которые его сужают."
+          },
+          "open_in": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Номер формы страницы, в которой открывается запись: формы изменения или просмотра записи, выбранной здесь; нет — запись открывается как раньше.",
+            "minimum": 0
+          },
+          "create_in": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Номер формы страницы, в которой заполняется новая запись: формы новой записи той же таблицы, только если элемент создаёт записи; нет — как раньше.",
+            "minimum": 0
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Только у списка: `fld_…` поля, которое строка показывает крупно, одно из `fields`; нет — первичное поле, если оно видно, иначе первое."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Только у списка: `fld_…` полей, которые показываются мелко под ним, до 4, каждое из `fields` и не `title`; пусто — следующие 3 из `fields`."
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ListGroupSpec",
+                "description": "Только у списка: поле, по которому группируются его записи, одно из `fields`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ElementColumnSpec"
+            },
+            "description": "Только у сетки: ширина её колонок, каждая — у одного из полей `fields`, по одному разу; поле без своей ширины — 180 пикселей. Порядок значения не имеет: колонки идут в порядке `fields`."
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "Только у сетки и списка: порядок записей по умолчанию — до 3 ключей по полям из `fields`, каждое поле один раз, `asc` или `desc`; пусто — сортировка её представления, иначе ручной порядок таблицы. Сортировка в запросе записей важнее него."
           }
         },
         "additionalProperties": false
@@ -18324,6 +20225,31 @@
         },
         "additionalProperties": false
       },
+      "Rounding": {
+        "type": "object",
+        "description": "Число, которое округлит смена типа, как его покажет новый тип: у процента — в процентах.",
+        "required": [
+          "places",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "places": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Сколько знаков после запятой оставит новый тип.",
+            "minimum": 0
+          },
+          "before": {
+            "type": "string",
+            "description": "Число до смены, десятичное с точкой: `112715.42843`."
+          },
+          "after": {
+            "type": "string",
+            "description": "Число после смены: `112715`."
+          }
+        }
+      },
       "RowHeight": {
         "type": "string",
         "description": "Высота строк сетки.",
@@ -18335,20 +20261,59 @@
       },
       "RowSpec": {
         "type": "object",
-        "description": "Строка сетки.",
-        "required": [
-          "cells"
-        ],
+        "description": "Строка сетки: либо ячейки рядом, высотой по самой высокой из них, либо 2–3 колонки рядом, у каждой своя высота.",
         "properties": {
           "cells": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CellSpec"
             },
-            "description": "Её ячейки слева направо; сумма их ширин — не больше 12."
+            "description": "Её ячейки слева направо; сумма их ширин — не больше 12. В ответе есть всегда, у строки колонок — пусто; в запросе можно опустить."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSpec"
+            },
+            "description": "Её колонки слева направо, 2 или 3; сумма их ширин — не больше 12. Только у строки колонок, у которой нет ячеек."
           }
         },
         "additionalProperties": false
+      },
+      "RuleBound": {
+        "type": "object",
+        "description": "Граница значений числа или даты.",
+        "required": [
+          "value",
+          "inclusive"
+        ],
+        "properties": {
+          "value": {
+            "description": "Число или дата `YYYY-MM-DD`."
+          },
+          "inclusive": {
+            "type": "boolean",
+            "description": "Входит ли сама граница."
+          }
+        }
+      },
+      "RulePerson": {
+        "type": "object",
+        "description": "Человек, которого называют фильтры элемента: его форма может предложить или оставить.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя, как его показывает организация."
+          }
+        }
       },
       "Run": {
         "type": "object",
@@ -18382,6 +20347,17 @@
             ],
             "description": "Запись, которая его запустила, `rec_…`."
           },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerKind",
+                "description": "Вид повода, по которому он начался."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/RunStatus",
             "description": "Чем он закончился."
@@ -18391,7 +20367,7 @@
               "string",
               "null"
             ],
-            "description": "Почему он не удался, отменён или пропущен."
+            "description": "Почему он не удался, отменён или пропущен: код; у шага — сначала его номер, подробности — после двоеточий, `step 3: recipient-not-allowed: bu***@example.test`."
           },
           "depth": {
             "type": "integer",
@@ -18500,7 +20476,7 @@
               "string",
               "null"
             ],
-            "description": "Причина сбоя."
+            "description": "Почему не удался: код и подробности после двоеточий, `secret-missing: api_key`."
           },
           "finished_at": {
             "type": [
@@ -19191,7 +21167,7 @@
                   "string",
                   "null"
                 ],
-                "description": "Тело — шаблон JSON: вставки экранируются как его строки."
+                "description": "Тело — шаблон JSON: вставка стоит внутри кавычек строки, и её значение экранируется как строка, `{\"query\": \"{{ {ИНН} }}\"}`."
               },
               "signing_secret": {
                 "type": [
@@ -19210,6 +21186,10 @@
                     "type": "null"
                   }
                 ]
+              },
+              "on_error": {
+                "$ref": "#/components/schemas/OnError",
+                "description": "Что делает запуск, когда запрос окончательно не удался — код ответа не 2xx, ответ не JSON, когда его читает следующий шаг, нет ответа после повторов: `stop` (по умолчанию) — остановиться или `continue` — продолжить; следующие шаги читают `STEP(n, \"$.status\")` и `STEP(n, \"$.error\")`."
               },
               "kind": {
                 "type": "string",
@@ -19360,9 +21340,239 @@
               "null"
             ],
             "description": "Поле, которое отныне называет записи, `fld_…`: поле этой таблицы того типа, что может их называть, — текст, число, дата, вариант, автономер, формула."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить таблицу прямо перед этой таблицей той же базы (`tbl_…`) в порядке вкладок, общем для всех; не вместе с `after`."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить таблицу прямо после этой таблицы той же базы (`tbl_…`)."
           }
         },
         "additionalProperties": false
+      },
+      "TestFieldValue": {
+        "type": "object",
+        "description": "Поле записи в проверке: его значение сейчас и после шага, в формате API.",
+        "required": [
+          "field",
+          "after"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Поле, `fld_…`."
+          },
+          "before": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Значение сейчас; у новой записи — нет."
+          },
+          "after": {
+            "type": "object",
+            "description": "Значение после шага."
+          }
+        }
+      },
+      "TestHeader": {
+        "type": "object",
+        "description": "Заголовок запроса в проверке.",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Его имя."
+          },
+          "value": {
+            "type": "string",
+            "description": "Его значение; значение секрета — `***`."
+          }
+        }
+      },
+      "TestLetter": {
+        "type": "object",
+        "description": "Письмо, которое проверка отправила бы.",
+        "required": [
+          "to",
+          "cc",
+          "subject",
+          "text"
+        ],
+        "properties": {
+          "to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Получатели."
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Копии."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Тема."
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст."
+          }
+        }
+      },
+      "TestRecord": {
+        "type": "object",
+        "description": "Запись, которую проверка изменила бы или создала: её поля, которые изменились бы.",
+        "required": [
+          "table",
+          "values"
+        ],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "Таблица, `tbl_…`."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Изменяемая запись, `rec_…`; нет значения — новая."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestFieldValue"
+            },
+            "description": "Поля, значения которых изменились бы, в том числе вычисляемые."
+          }
+        }
+      },
+      "TestRequest": {
+        "type": "object",
+        "description": "Запрос проверки, как он был отправлен; значения секретов — `***`.",
+        "required": [
+          "method",
+          "url",
+          "headers",
+          "body_truncated"
+        ],
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "Метод."
+          },
+          "url": {
+            "type": "string",
+            "description": "Адрес со вставками."
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestHeader"
+            },
+            "description": "Отправленные заголовки."
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Отправленное тело, не больше 64 КБ."
+          },
+          "body_truncated": {
+            "type": "boolean",
+            "description": "Было ли тело длиннее."
+          }
+        }
+      },
+      "TestResponse": {
+        "type": "object",
+        "description": "Ответ на запрос проверки; значения секретов — `***`.",
+        "required": [
+          "status",
+          "body_truncated",
+          "json"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Код ответа.",
+            "minimum": 0
+          },
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Его `Content-Type`."
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Тело, не больше 64 КБ."
+          },
+          "body_truncated": {
+            "type": "boolean",
+            "description": "Было ли тело длиннее."
+          },
+          "json": {
+            "type": "boolean",
+            "description": "Является ли тело JSON."
+          }
+        }
+      },
+      "TestValue": {
+        "type": "object",
+        "description": "Значение, которое шаг прочитал из ответа более раннего шага.",
+        "required": [
+          "step",
+          "path"
+        ],
+        "properties": {
+          "step": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Номер шага, чей это ответ.",
+            "minimum": 0
+          },
+          "path": {
+            "type": "string",
+            "description": "Путь, `$.body.suggestions[0].value`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Значение текстом; нет значения — пусто."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Его ошибка: `#NOT_FOUND` — пути нет в ответе, `#TOO_LONG`."
+          }
+        }
       },
       "Token": {
         "type": "object",
@@ -19657,6 +21867,17 @@
         ],
         "description": "Что запускает автоматизацию — всегда по записи её таблицы."
       },
+      "TriggerKind": {
+        "type": "string",
+        "description": "Вид повода: по чему начался запуск автоматизации.",
+        "enum": [
+          "record_created",
+          "record_updated",
+          "record_matches",
+          "form_submitted",
+          "button_pressed"
+        ]
+      },
       "TypeChange": {
         "type": "object",
         "description": "Смена типа поля: новый тип и его настройки. Значения, которые не подходят новому типу, становятся пустыми — сколько, заранее говорит `POST /fields/{field}/type-preview`.",
@@ -19699,6 +21920,22 @@
             "type": "integer",
             "format": "int64",
             "description": "Сколько из них значений станут пустыми."
+          },
+          "rounded": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Сколько из них чисел потеряют знаки после запятой: округлятся до знаков нового типа."
+          },
+          "rounding": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Rounding",
+                "description": "Первое из округляемых чисел, если они есть: знаки после запятой нового типа и число до и после, как его покажет новый тип."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "more": {
             "type": "boolean",
@@ -20106,7 +22343,7 @@
       },
       "ViewPatch": {
         "type": "object",
-        "description": "Изменение представления: название, настройки или и то и другое.",
+        "description": "Изменение представления: название, настройки, место среди представлений или несколько из них.",
         "properties": {
           "name": {
             "type": [
@@ -20125,6 +22362,20 @@
                 "type": "null"
               }
             ]
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить представление прямо перед этим представлением той же таблицы (`viw_…`) в порядке её представлений, общем для всех; не вместе с `after`."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Поставить представление прямо после этого представления той же таблицы (`viw_…`)."
           }
         },
         "additionalProperties": false

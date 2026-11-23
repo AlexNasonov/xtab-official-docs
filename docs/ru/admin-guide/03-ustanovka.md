@@ -1,7 +1,7 @@
 ---
 title: "Установка"
 description: "1. Проверьте подпись архива, если у вас есть cosign: команда указана в заголовке install.sh. 2. Распакуйте архив и запустите установщик:"
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 3
 ---
@@ -32,7 +32,7 @@ order: 3
 4. Установщик запустит сервисы, проверит работу через HTTPS и в конце один раз покажет ссылку администратора первой организации. Ссылка действует 24 часа. Новую выдаёт команда в каталоге установки:
 
    ```bash
-   docker compose run --rm migrate user access-link --email admin@example.ru
+   docker compose run --rm migrate user access-link --email admin@example.com
    ```
 
 Язык установщика — из `LANG` или ключом `--lang ru|en`, каталог — ключом `--dir`.
@@ -42,7 +42,7 @@ order: 3
 Для нескольких одинаковых стендов те же ответы задаются файлом. Все ключи с пояснениями и значениями по умолчанию — в `install.example.toml` комплекта: скопируйте его в `install.toml` и поправьте.
 
 ```toml
-domain = "xtab.example.ru"
+domain = "xtab.example.com"
 
 [tls]
 mode = "internal"        # internal — свой центр сертификации, acme — Let's Encrypt, files — свои файлы
@@ -52,7 +52,7 @@ kind = "builtin"         # builtin — встроенное хранилище, 
 
 [organization]
 name = "ООО Ромашка"
-admin = "admin@example.ru"
+admin = "admin@example.com"
 ```
 
 ```bash
@@ -73,7 +73,8 @@ sudo ./install.sh --answers install.toml --yes
 - Секреты — в `secrets/`. Сохраните отдельно от сервера и от резервных копий:
   - `master_key` — без него восстановленная база не откроется;
   - `backup_key` — закрытый ключ резервных копий, без него копии не прочитать;
-  - `audit_signing_key` — ключ подписи журнала аудита;
+  - `audit_signing_key` — ключ подписи журнала аудита (есть только у `xtab-sealer`);
+  - `files_signing_key` — ключ подписи резервных копий и архива аудита (есть у `xtab-worker`); восстановление проверяет им подписи копий;
   - `audit_archive_key` — закрытый ключ архива журнала аудита.
 - Свои правки — только в `docker-compose.override.yml` и `caddy/local/*.caddy`: обновление их не меняет.
-- Повторный запуск установщика безопасен: секреты и данные сохраняются. Сменить ответы — `sudo ./install.sh --reconfigure`.
+- Повторный запуск установщика безопасен: секреты и данные сохраняются. Сменить ответы — повторный запуск `sudo ./install.sh` той же версии: установщик задаст вопросы заново, предложив текущие ответы, или возьмёт новые из файла (`--answers install.toml`).

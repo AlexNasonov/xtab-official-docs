@@ -7,7 +7,7 @@
       "name": "LicenseRef-Proprietary",
       "identifier": "LicenseRef-Proprietary"
     },
-    "version": "0.8.0"
+    "version": "0.9.0"
   },
   "servers": [
     {
@@ -444,6 +444,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "second-factor-locked: too many wrong codes in a row; an administrator of the organization resets the second factor",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1209,7 +1219,7 @@
             }
           },
           "202": {
-            "description": "The new password is set; the second factor follows by `POST /auth/login/second-factor`",
+            "description": "The second factor follows by `POST /auth/login/second-factor`; the new password is set once its code is right",
             "content": {
               "application/json": {
                 "schema": {
@@ -2766,6 +2776,15 @@
             }
           },
           {
+            "name": "iss",
+            "in": "query",
+            "description": "The issuer of the answer (RFC 9207); when given, it must be the provider of the login.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "error",
             "in": "query",
             "description": "The error of the provider.",
@@ -3835,6 +3854,109 @@
         }
       }
     },
+    "/instance/announcement": {
+      "put": {
+        "tags": [
+          "instance"
+        ],
+        "summary": "Sets the announcement for every user of the installation: a banner over every page and the\nlogin page from its start to its end. Replaces the one before.",
+        "operationId": "set_announcement",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Announcement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The announcement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not the administrator of the instance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the text or the times",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "instance"
+        ],
+        "summary": "Removes the announcement: the banner goes from every page within a minute.",
+        "operationId": "remove_announcement",
+        "responses": {
+          "204": {
+            "description": "No announcement"
+          },
+          "403": {
+            "description": "forbidden: not the administrator of the instance",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/announcement": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "The announcement of the administrator of the instance that has not ended — the page shows\nit from its start — for everyone, the login page too. The page asks once a minute: the\nanswer carries its tag, and `If-None-Match` with it answers `304`.",
+        "operationId": "announcement",
+        "responses": {
+          "200": {
+            "description": "The announcement",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Announcement"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No announcement"
+          },
+          "304": {
+            "description": "The announcement of the tag sent"
+          }
+        },
+        "security": [
+          {}
+        ]
+      }
+    },
     "/workspaces": {
       "get": {
         "tags": [
@@ -4646,7 +4768,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Rename or describe a table, or choose the field that names its records (creator of the\nbase).",
+        "summary": "Rename or describe a table, choose the field that names its records, or move its tab\nbefore or after another table of the base (creator of the base). The order of the tabs is\nthe same for everyone.",
         "operationId": "update_table",
         "parameters": [
           {
@@ -4701,7 +4823,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: name taken or invalid, description too long, a primary field of another table or of a type that names no record",
+            "description": "validation-failed: name taken or invalid, description too long, a primary field of another table or of a type that names no record, both before and after, a neighbour not in the base",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4774,6 +4896,74 @@
           },
           "422": {
             "description": "validation-failed: name",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tables/{table}/hidden": {
+      "put": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Hide a table from one's own row of tabs of its base (anyone who opens the base): the\ntable stays in the list of all tables, in the search and in the API, and the others see\ntheir tabs as before. Hiding it again changes nothing.",
+        "operationId": "hide_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Hidden"
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "structure"
+        ],
+        "summary": "Show a hidden table again in one's own row of tabs. Showing a table that is not hidden\nchanges nothing.",
+        "operationId": "show_table",
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "description": "`tbl_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Shown"
+          },
+          "404": {
+            "description": "not-found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4949,7 +5139,7 @@
             }
           },
           "202": {
-            "description": "Accepted: a new formula is checked and counted in the background; `Location` is the operation",
+            "description": "Accepted: a new formula, or a new expression or condition of a rollup, is checked and counted in the background; `Location` is the operation",
             "content": {
               "application/json": {
                 "schema": {
@@ -5325,7 +5515,7 @@
         "tags": [
           "structure"
         ],
-        "summary": "Rename a shared view or replace its settings (creator of the base): the order, widths and\nvisibility of the columns and the height of the rows.",
+        "summary": "Rename a shared view, replace its settings — the order, widths and visibility of the\ncolumns and the height of the rows — or move it before or after another view of its table\n(creator of the base). The order of the views is the same for everyone.",
         "operationId": "update_view",
         "parameters": [
           {
@@ -5380,7 +5570,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: the name or the settings",
+            "description": "validation-failed: the name or the settings, both before and after, a neighbour not in the table",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5577,6 +5767,80 @@
           },
           "422": {
             "description": "validation-failed: the name, the trigger, the condition, a step or a value; or too many automations",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automations/{automation}/duplicate": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Duplicate an automation (creator of its base): a copy in the same table, named after it\nwith a mark of the copy — from the second copy with the first number no automation of the\ntable has, a copy of a copy numbered from the first name — with the same description,\ntriggers, condition and steps, checked as a new automation is. The copy is disabled and\nowned by the person who duplicates it. The values of its secrets are not copied — its steps\nkeep their names, the values are set again — nor are the run log and the versions: the copy\nstarts with its first version.",
+        "operationId": "duplicate_automation",
+        "parameters": [
+          {
+            "name": "automation",
+            "in": "path",
+            "description": "The automation, `aut_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "A key of a safe repeat: the same request with it within 24 hours gets the stored answer instead of running again; up to 64 visible ASCII characters",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The copy, disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Automation"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: a field or a form the automation names is gone, or too many automations",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6274,6 +6538,140 @@
           },
           "404": {
             "description": "not-found: no such automation or secret",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bases/{base}/automation-tests": {
+      "post": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "Try the steps of an automation — saved or not, enabled or not — on a record (creator of\nthe base). The server runs them as a run would, with the rights of the owner: HTTP requests\ngo for real, through the policy «Outgoing addresses»; changes of records and letters are\nonly shown — nothing is written or sent, and the run log gets no run. A person has one\ntrial at a time and ten a minute, an organization a hundred an hour; the result is kept\nfor an hour and only its author reads it.",
+        "operationId": "create_test",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "The base, `bas_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationTestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationTest"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: not a creator of the base; read-only-mode",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the base, an automation not of the base, the record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "test-running: the trial before is not finished",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: the definition, as when it is saved",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate-limited, with Retry-After",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/automation-tests/{test}": {
+      "get": {
+        "tags": [
+          "automations"
+        ],
+        "summary": "A trial of an automation: its steps so far (the one who started it, for an hour).",
+        "operationId": "get_test",
+        "parameters": [
+          {
+            "name": "test",
+            "in": "path",
+            "description": "The trial, `tst_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The trial",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationTest"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: another person's, or older than an hour",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9606,6 +10004,16 @@
               }
             }
           },
+          "409": {
+            "description": "already-uploaded: another request of the same upload finished first; its file stays",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "413": {
             "description": "too-large",
             "content": {
@@ -9733,7 +10141,7 @@
             }
           },
           "403": {
-            "description": "forbidden, or step-up-required for more than 1000 records",
+            "description": "forbidden, or step-up-required for more than 1000 records or when they are not counted in time",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10026,6 +10434,16 @@
           },
           "408": {
             "description": "request-timeout: the bytes stopped or came too slowly",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "already-uploaded: another request of the same upload finished first; its file stays",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11107,7 +11525,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Save the whole draft of an interface (creator of the base): checked against the tables of\nthe base; its users see it only after a publication.",
+        "summary": "Save the whole draft of an interface (creator of the base): checked against the tables of\nthe base; its users see it only after a publication. Every save takes the number of the\ndraft one up; a save made over an older number is refused, so two tabs or two creators do\nnot wipe each other's work.",
         "operationId": "save_draft",
         "parameters": [
           {
@@ -11162,7 +11580,7 @@
             }
           },
           "409": {
-            "description": "conflict: another save of the draft came first",
+            "description": "draft-changed: the draft was saved meanwhile — in another tab or by another creator of the base — after the version the change was made on",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11189,7 +11607,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Publish the draft of an interface (creator of the base): checked again against the tables\nas they are, then its users see it.",
+        "summary": "Publish the draft of an interface (creator of the base): checked again against the tables\nas they are, then its users see it — exactly the version checked; a draft saved meanwhile\nis not published.",
         "operationId": "publish_interface",
         "parameters": [
           {
@@ -11225,6 +11643,16 @@
           },
           "404": {
             "description": "not-found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "draft-changed: the draft was saved meanwhile — in another tab or by another creator of the base — after it was checked; nothing is published",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11655,7 +12083,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: the filter; a view",
+            "description": "validation-failed: the filter; a view; view-too-heavy: not counted in time",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11765,7 +12193,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: the filter, groups or summaries; a view",
+            "description": "validation-failed: the filter, groups or summaries; a view; view-too-heavy: not counted in time",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11881,7 +12309,7 @@
         "tags": [
           "interfaces"
         ],
-        "summary": "Create records through an element (its user at the level «work», when the element allows\ncreating): only the fields it marks editable.",
+        "summary": "Create records through an element (its user at the level «work», when the element allows\ncreating): only the fields it marks editable. A field its required filter leaves one value\nfor — «is», «is me», one of «is any of» — takes that value when not given, a field it does\nnot let change too: the record stays among those it shows. `before` and `after` — only when\nit lets change the order, and only a record it shows.",
         "operationId": "element_create_records",
         "parameters": [
           {
@@ -11966,7 +12394,7 @@
             }
           },
           "403": {
-            "description": "forbidden: the element does not allow it, or the level is «view»",
+            "description": "forbidden: the element does not allow it — or, with `before` or `after`, does not let change the order — or the level is «view»",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11976,7 +12404,7 @@
             }
           },
           "404": {
-            "description": "not-found: the interface or the element",
+            "description": "not-found: the interface or the element; the record of `before` or `after` is not among those it shows",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12256,6 +12684,126 @@
         }
       }
     },
+    "/interfaces/{interface}/elements/{element}/records/move": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "Move records through an element (its user at the level «work», when the element lets\nchange the order): right before or after a record, or to the end, in the manual order of\nthe table — the one every view and element of it shows. Only records the element shows,\nnext to one it shows.",
+        "operationId": "element_move_records",
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "The number of the element",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` or `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` writes numbers as strings.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — the draft, for a creator of the base trying it out before publishing.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRecords"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The moved records with the fields the element shows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Records"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: the element does not let change the order, or the level is «view»",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the interface or the element; a record moved or the one they go next to is not among those it shows",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: the element no longer fits its table",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `records[i]` malformed or repeated, `before` with `after`, the place is a moved record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/interfaces/{interface}/elements/{element}/summary": {
       "post": {
         "tags": [
@@ -12354,7 +12902,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: the filter (only fields its filters offer); a view or a search",
+            "description": "validation-failed: the filter (only fields its filters offer); a view or a search; view-too-heavy: not counted in time",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12456,7 +13004,7 @@
             }
           },
           "403": {
-            "description": "forbidden: the level is «view»",
+            "description": "forbidden: the level is «view»; a deletion its element does not allow",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12486,7 +13034,7 @@
             }
           },
           "422": {
-            "description": "validation-failed: `record` missing or not expected; `fields.<key>` — a field not filled in on the page; values as in records; `values` — a value that did not compute",
+            "description": "validation-failed: `record` missing or not expected; `fields` — any value: forms send the fields of a page; values as in records; `values` — a value that did not compute; `wrong-element` — a button that opens a form",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12497,6 +13045,349 @@
           },
           "429": {
             "description": "rate-limited: the same press less than 2 s ago",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/interfaces/{interface}/elements/{element}/submit": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "Send a form (its user at the level «work»): a form of a new record creates one in its\ntable, a form that changes the record chosen in its element of records writes the fields\nthe person changed. Only the fields the form lets write are taken; the required ones shown\nmust be filled in, those hidden by their conditions take nothing.",
+        "operationId": "element_submit_form",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "A key of a safe repeat: the same request with it within 24 hours gets the stored answer instead of running again; up to 64 visible ASCII characters",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "The number of the form",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` or `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` writes numbers as strings.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — the draft, for a creator of the base trying it out before publishing.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubmit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The record changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSubmitted"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The record created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormSubmitted"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden: the level is «view», or the form only shows its record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the interface, the form, or the record among those its element of records shows",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: the form or its element no longer fits its table",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "precondition-failed: the fields changed meanwhile; `errors[].record`, `errors[].field` and the `current` records",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreconditionFailed"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: by `fields.<key>` — `not-in-form`, `read-only`, `hidden-question`, `required` and the errors of values; `record` or `via` not expected or missing; `values` — a value of the form that did not compute; from an element with filters — `outside-filter` at a value they do not allow, `outside-element` at the fields whose conditions keep the record out of the element",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/interfaces/{interface}/elements/{element}/fields/{field}/choices": {
+      "post": {
+        "tags": [
+          "interfaces"
+        ],
+        "summary": "The records a link changed through an element may be set to (its user at the level\n«work»): the records of the linked table in their manual order, each with the text of its\nprimary field, searched in that text only; the link must be one the element lets change.\nThe condition of choosing of the field narrows them by the values of the record the\nelement shows: those it lets change from `values`, the others from the saved record; a\nfield it does not show is empty. A form of a new record keeps to the filters of the\nelement it was opened from (`via`), otherwise of the first element of its page that\ncreates in it: it offers only the records they leave, and names the records of `check`\namong them.",
+        "operationId": "element_link_choices",
+        "parameters": [
+          {
+            "name": "interface",
+            "in": "path",
+            "description": "`ifc_…`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "element",
+            "in": "path",
+            "description": "The number of the element: a form, a grid, a list, a kanban or a card",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…` of a link the element lets change",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "description": "`id` or `name`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "numbers",
+            "in": "query",
+            "description": "`string` writes numbers as strings.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "draft",
+            "in": "query",
+            "description": "`true` — the draft, for a creator of the base trying it out before publishing.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkChoices"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Choices"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the interface, the element, a field that is not a link the element lets change, the level «view», or the record among those the element shows",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "element-outdated: the element no longer fits its table",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `values`, `search`, `limit`, `offset` or `check` beyond their limits, `via` — wrong-element: not an element that creates in the form; choices-too-heavy: not found in time",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fields/{field}/choices": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "summary": "The records a link field may be set to (a participant of the base who reads its table):\nthose of the linked table its condition of choosing leaves for the values of the record,\nin the manual order of that table, each with the text of its primary field; which of the\nlinks chosen already the condition no longer holds for; which fields of the record, being\nempty, keep it from narrowing the list. A long list comes in portions: the next one starts\nat `offset`.",
+        "operationId": "link_choices",
+        "parameters": [
+          {
+            "name": "field",
+            "in": "path",
+            "description": "`fld_…` of a link field",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkChoices"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The candidates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Choices"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not-found: the field, a field that is not a link, the record",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation-failed: `values`, `search`, `limit`, `offset` or `check` beyond their limits, a key of `values` that is no field of the table, a value of a wrong type; choices-too-heavy: not found in time",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12629,6 +13520,10 @@
           "delete": {
             "type": "boolean",
             "description": "Delete records."
+          },
+          "reorder": {
+            "type": "boolean",
+            "description": "Move records in the manual order of the table, which every view and element shares —\na grid or a list only, and only while no sort orders them."
           }
         },
         "additionalProperties": false
@@ -12690,6 +13585,29 @@
         },
         "additionalProperties": false
       },
+      "Announcement": {
+        "type": "object",
+        "description": "The announcement of the administrator of the instance: a banner every user sees from its\nstart to its end, on the login page too. Its text is shown as text.",
+        "required": [
+          "text",
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The text: 1 to 500 characters, lines allowed."
+          },
+          "starts_at": {
+            "type": "string",
+            "description": "From when it shows, RFC 3339."
+          },
+          "ends_at": {
+            "type": "string",
+            "description": "Until when it shows, RFC 3339: later than the start and than now."
+          }
+        }
+      },
       "AnonymizeInput": {
         "type": "object",
         "description": "The deletion of an account on the request of the person (`POST\n/org/users/{user}/anonymize`): its e-mail typed again confirms which one.",
@@ -12705,7 +13623,7 @@
       },
       "AssignInput": {
         "type": "object",
-        "description": "A field and its value: an expression of the language of formulas over the record that\nstarted the run, such as `{Сумма} * 1.2` or `WORKDAY(TODAY(), 3)`.",
+        "description": "A field and its value: an expression of the language of formulas over the record that\nstarted the run, such as `{Сумма} * 1.2` or `WORKDAY(TODAY(), 3)`. After an HTTP request\nit may read its answer: `STEP(1, \"$.body.suggestions[0].value\")` — the number of the step\nfrom 1 and a path into the body, `$.status` or `$.error`.",
         "required": [
           "field",
           "value"
@@ -13144,6 +14062,233 @@
           "auto_disabled"
         ]
       },
+      "AutomationTest": {
+        "type": "object",
+        "description": "A trial of an automation and its steps so far. It is kept for an hour and only the one\nwho started it sees it.",
+        "required": [
+          "id",
+          "table",
+          "record",
+          "status",
+          "created_at",
+          "steps"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`tst_…`."
+          },
+          "automation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The automation tried, `aut_…`, when it was saved."
+          },
+          "table": {
+            "type": "string",
+            "description": "The table of the trigger, `tbl_…`."
+          },
+          "record": {
+            "type": "string",
+            "description": "The record, `rec_…`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationTestStatus",
+            "description": "Where it is."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the trial could not run."
+          },
+          "condition_met": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the record meets the condition of the automation; none — it has no\ncondition. The steps run either way."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "When it was started, RFC 3339."
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it ended, RFC 3339."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationTestStep"
+            },
+            "description": "The steps ran so far, in order; once it is done, every step."
+          }
+        }
+      },
+      "AutomationTestInput": {
+        "type": "object",
+        "description": "A trial of an automation on a record: the steps of a definition — saved or not — run on\nthe record by the server. Requests go for real, through the policy «Outgoing addresses»;\nchanges of records and letters are only shown, nothing is written or sent.",
+        "required": [
+          "table",
+          "definition",
+          "record"
+        ],
+        "properties": {
+          "automation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The automation tried, `aut_…`, when it is saved: its owner's rights are used."
+          },
+          "table": {
+            "type": "string",
+            "description": "The table of its trigger, `tbl_…`, a table of the base."
+          },
+          "definition": {
+            "$ref": "#/components/schemas/DefinitionInput",
+            "description": "The definition tried, checked as when it is saved."
+          },
+          "record": {
+            "type": "string",
+            "description": "The record of the table it runs on, `rec_…`."
+          },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerKind",
+                "description": "The trigger the trial plays, one of the kinds of the definition: what `TRIGGER()`\ngives. The first of them when not given."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationTestStatus": {
+        "type": "string",
+        "description": "Where a trial is.",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ]
+      },
+      "AutomationTestStep": {
+        "type": "object",
+        "description": "A step of a trial: what it sent, got, would have written or sent.",
+        "required": [
+          "number",
+          "kind",
+          "status"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Its number, from 1.",
+            "minimum": 0
+          },
+          "kind": {
+            "type": "string",
+            "description": "`update_record`, `create_record`, `send_email` or `http_request`."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationTestStepStatus",
+            "description": "What became of it."
+          },
+          "continued": {
+            "type": "boolean",
+            "description": "A request that failed and lets the run go on: the next steps ran."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it failed, with its place."
+          },
+          "duration_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "How long it took, in milliseconds.",
+            "minimum": 0
+          },
+          "request": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestRequest",
+                "description": "The request sent."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestResponse",
+                "description": "The answer got."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestValue"
+            },
+            "description": "The values of answers of earlier steps the step read by `STEP`."
+          },
+          "letter": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestLetter",
+                "description": "The letter it would send."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "record": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TestRecord",
+                "description": "The record it would change or create."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "AutomationTestStepStatus": {
+        "type": "string",
+        "description": "What became of a step of a trial.",
+        "enum": [
+          "done",
+          "failed",
+          "unknown",
+          "not_run"
+        ]
+      },
       "AutomationsPolicyBody": {
         "type": "object",
         "description": "Automations of the organization: how long their run log keeps a run.",
@@ -13212,6 +14357,13 @@
           "role": {
             "type": "string",
             "description": "The role of the user in the base: the highest of their roles in it and in its\nworkspace."
+          },
+          "hidden": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The tables, `tbl_…`, the user hid from their own row of tabs, in the order of the\ntables. Only how the base looks to them: the tables stay in `tables`, and others do\nnot see the choice. Absent — none hidden."
           }
         }
       },
@@ -13453,6 +14605,43 @@
                 ]
               }
             }
+          },
+          {
+            "type": "object",
+            "description": "Opens a form of the page in a window: of a new record, or of the chosen record — to\nchange or to read it. A form of the chosen record needs `record_of` of the button to be\nthat of the form. Not pressed on the server: the form is read and sent by itself.",
+            "required": [
+              "form",
+              "kind"
+            ],
+            "properties": {
+              "form": {
+                "type": "integer",
+                "format": "int32",
+                "description": "The number of the form.",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "open_form"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "Deletes the record chosen in `record_of` once the person confirms it, when that element\nlets delete records.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "delete_record"
+                ]
+              }
+            }
           }
         ],
         "description": "What a press of a button does."
@@ -13523,6 +14712,24 @@
         },
         "additionalProperties": false
       },
+      "Choice": {
+        "type": "object",
+        "description": "A candidate of a link.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`rec_…` of the linked record."
+          },
+          "name": {
+            "type": "string",
+            "description": "The text of its primary field as the field shows it."
+          }
+        }
+      },
       "ChoiceInput": {
         "type": "object",
         "description": "A choice of a single or multiple select. Without `id` it is a new one.",
@@ -13568,6 +14775,52 @@
           "color": {
             "type": "string",
             "description": "Color."
+          }
+        }
+      },
+      "Choices": {
+        "type": "object",
+        "description": "Records a link may be set to, in the manual order of the linked table.",
+        "required": [
+          "data",
+          "more"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            },
+            "description": "The candidates."
+          },
+          "more": {
+            "type": "boolean",
+            "description": "There are more: the next portion starts at `offset` plus the candidates given, and a\nsearch narrows them."
+          },
+          "outside": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` of `check` that the condition of choosing of the field does not hold for."
+          },
+          "unset": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`fld_…` of the record whose emptiness keeps the condition from narrowing the list."
+          },
+          "narrowed": {
+            "type": "boolean",
+            "description": "Whether the condition of choosing narrowed the list at least in part."
+          },
+          "checked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            },
+            "description": "Through a form of a new record: the records of `check` among the candidates, with the\ntext of their primary field — the names of the records its filters keep in the link."
           }
         }
       },
@@ -13670,6 +14923,32 @@
           "skip": {
             "type": "boolean",
             "description": "Into a new table: the column is not imported."
+          }
+        },
+        "additionalProperties": false
+      },
+      "ColumnSpec": {
+        "type": "object",
+        "description": "A column of a row: elements top to bottom, each as wide as the column.",
+        "required": [
+          "width",
+          "elements"
+        ],
+        "properties": {
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Columns of 12, 1 to 12.",
+            "minimum": 0
+          },
+          "elements": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "The numbers of its elements top to bottom; may be empty."
           }
         },
         "additionalProperties": false
@@ -13877,19 +15156,32 @@
         "type": "object",
         "description": "What an automation does: when it starts, for which records, and its steps in order.",
         "required": [
-          "trigger",
           "steps"
         ],
         "properties": {
+          "triggers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerInput"
+            },
+            "description": "What starts a run: any of them, 1 to 5 triggers of different kinds — the fields of\n`record_updated` are listed in one trigger. A change of a record starts at most one run;\nthe steps read the kind of the trigger that started it by `TRIGGER()`."
+          },
           "trigger": {
-            "$ref": "#/components/schemas/TriggerInput",
-            "description": "What starts a run."
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerInput",
+                "description": "One trigger, as clients written before `triggers` send it: taken as a list of one. Never\ngiven together with `triggers`, never in an answer."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "condition": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/FilterInput",
-                "description": "A run starts only for a record that meets it: a filter as views have, on fields of the\ntable of the trigger. Required by `record_matches`."
+                "description": "A run starts only for a record that meets it, whatever trigger started it: a filter as\nviews have, on fields of the table of the triggers. Required by `record_matches`."
               },
               {
                 "type": "null"
@@ -13954,10 +15246,11 @@
       },
       "Direction": {
         "type": "string",
-        "description": "The direction of a key of a sort; empty values are last either way.",
+        "description": "The direction of a key of a sort or of a level of groups; empty values are last either\nway. `linked_order` — only a level of groups by a link: in the manual order of the\nrecords of the linked table.",
         "enum": [
           "asc",
-          "desc"
+          "desc",
+          "linked_order"
         ]
       },
       "DraftInput": {
@@ -13979,6 +15272,57 @@
           }
         },
         "additionalProperties": false
+      },
+      "ElementColumnSpec": {
+        "type": "object",
+        "description": "The width of a column of a grid.",
+        "required": [
+          "field",
+          "width"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`: one of the fields the grid shows."
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Width in CSS pixels, 60…600.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "ElementFormRules": {
+        "type": "object",
+        "description": "What the filter of the view of an element of records asks of the form its new records open\nin.",
+        "required": [
+          "element",
+          "rules"
+        ],
+        "properties": {
+          "element": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The number of the element.",
+            "minimum": 0
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldRule"
+            },
+            "description": "The rules by field."
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RulePerson"
+            },
+            "description": "The people the form offers or keeps in its fields of users by these rules and the\nrequired filter of the element — «one of», «fixed», «keeps», not those taken away — with\ntheir names: only those who may be chosen."
+          }
+        }
       },
       "ElementKindSpec": {
         "oneOf": [
@@ -14084,8 +15428,31 @@
             }
           },
           {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FormSpec",
+                "description": "A form: a new record of its table, or the record chosen in an element of records\nof the page — changed or read."
+              },
+              {
+                "type": "object",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "form"
+                    ]
+                  }
+                }
+              }
+            ],
+            "description": "A form: a new record of its table, or the record chosen in an element of records\nof the page — changed or read."
+          },
+          {
             "type": "object",
-            "description": "The fields of a new record, sent by a button «create record» of the page.",
+            "description": "Deprecated: the fields of a new record, sent by a button «create record» of its table\non the page. Taken in a draft and read as a form of a new record over the same table\nwith the same fields — the button that sent them becomes its button; never answered.",
             "required": [
               "table",
               "fields",
@@ -14101,7 +15468,7 @@
                 "items": {
                   "$ref": "#/components/schemas/FieldRuleSpec"
                 },
-                "description": "The fields asked."
+                "description": "The fields asked: those marked editable are filled in, the others only shown."
               },
               "kind": {
                 "type": "string",
@@ -14475,11 +15842,20 @@
           }
         }
       },
+      "FieldAccess": {
+        "type": "string",
+        "description": "How a form treats one of its fields.",
+        "enum": [
+          "editable",
+          "read_only",
+          "required"
+        ]
+      },
       "FieldDefault": {
         "oneOf": [
           {
             "type": "object",
-            "description": "A value as the records of the field take it: a text, a number, `true`, an `opt_…` or a\nlist of them, a date, a moment, a `usr_…` or a list of them.",
+            "description": "A value as the records of the field take it: a text, a number, `true`, an `opt_…` or a\nlist of them, a date, a moment, a `usr_…` or a list of them. A choice may be given by\nits name too, a new choice of the same request included.",
             "required": [
               "value",
               "kind"
@@ -14728,6 +16104,137 @@
         },
         "additionalProperties": false
       },
+      "FormFieldRule": {
+        "type": "object",
+        "description": "What filters ask of a field of a form of a new record: a value it takes, the values it\nmay take, or a check of the server when the form is sent. Choices are `opt_…` and people\n`usr_…` — only those who may be chosen; records of links are not told.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`."
+          },
+          "fixed": {
+            "description": "The one value the field takes, as a write gives it; the field is shown read-only."
+          },
+          "one_of": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The values the field may take; one of them is required."
+          },
+          "keeps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The values that stay in the field; others may join them."
+          },
+          "without": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The values taken away from the choice."
+          },
+          "filled": {
+            "type": "boolean",
+            "description": "The field is required."
+          },
+          "empty": {
+            "type": "boolean",
+            "description": "The field stays empty."
+          },
+          "min": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RuleBound",
+                "description": "The lowest value of a number or a date."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RuleBound",
+                "description": "The highest value of a number or a date."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "check": {
+            "type": "boolean",
+            "description": "The server checks the record when the form is sent: it may still be refused."
+          },
+          "contradiction": {
+            "type": "boolean",
+            "description": "The filters ask for what no value gives: a record of the form is refused."
+          }
+        }
+      },
+      "FormFieldSpec": {
+        "type": "object",
+        "description": "A field of a form.",
+        "required": [
+          "field",
+          "access"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…` of the table of the form."
+          },
+          "access": {
+            "$ref": "#/components/schemas/FieldAccess",
+            "description": "`editable`, `read_only` or `required` (editable and not sent empty while shown);\ncomputed fields are only `read_only`, and so is every field of a form `view`."
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The wording instead of the name of the field, up to 500 characters."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A hint under the field, up to 500 characters."
+          },
+          "when": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ShownInput",
+                "description": "Shown only while an earlier field of the form meets this."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "width": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Columns of 4 it takes, 1 to 4: on a narrower form it takes the whole row. Absent in a\ndraft — by the kind of the field: texts of many lines, attachments and links take 4,\nthe rest 1; always answered.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
       "FormInput": {
         "type": "object",
         "description": "A form: its title, its description, its questions and the message after sending.",
@@ -14763,6 +16270,15 @@
         },
         "additionalProperties": false
       },
+      "FormMode": {
+        "type": "string",
+        "description": "What a form does with its record.",
+        "enum": [
+          "new",
+          "edit",
+          "view"
+        ]
+      },
       "FormSent": {
         "type": "object",
         "description": "A form sent.",
@@ -14780,6 +16296,127 @@
             "description": "What the person reads now: the message of the form, or a standard thanks."
           }
         }
+      },
+      "FormSpec": {
+        "type": "object",
+        "description": "A form of a page.",
+        "required": [
+          "mode",
+          "fields"
+        ],
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/FormMode",
+            "description": "`new` — fills in a new record of `table`; `edit` — changes the record chosen in\n`record_of`; `view` — shows it."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`tbl_…` of a new record; none for `edit` and `view`."
+          },
+          "record_of": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of the grid, list or kanban of the page whose chosen record the form\nchanges or reads; for a new record — the record its values are computed over, if any.",
+            "minimum": 0
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFieldSpec"
+            },
+            "description": "Its fields in their order, 1 to 100."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueSpec"
+            },
+            "description": "Values a new record gets from the form itself: expressions over the record of\n`record_of`, constants without it; not in fields the person fills in."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A text under the title, up to 2000 characters."
+          },
+          "submit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The label of the button that sends it, up to 200 characters; none — a standard one."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the person reads after a new record is sent, up to 2000 characters; none — a\nstandard one."
+          },
+          "window": {
+            "type": "boolean",
+            "description": "Only in a window: the form stands in no cell of the page and opens from a button or\na record."
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSubmit": {
+        "type": "object",
+        "description": "A sending of a form (`POST /interfaces/{interface}/elements/{form}/submit`).",
+        "required": [
+          "fields"
+        ],
+        "properties": {
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…`: the record a form `edit` changes — chosen in its element of records; for a\nform of a new record with `record_of` — the record its values are computed over."
+          },
+          "fields": {
+            "type": "object",
+            "description": "Values by `fld_…` or name: only fields the form lets write; `null` — empty. A form\n`edit` sends only the fields the person changed."
+          },
+          "condition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "For a form `edit`: the values the changed fields had when the person opened the\nrecord; any of them changed since — `412` with the current record."
+          },
+          "via": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of the element of records whose «+» opened a form of a new record: the\nnew record keeps to its filters. Without it — to the first element of the page of the\nform that creates its new records in it.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSubmitted": {
+        "type": "object",
+        "description": "What a sending of a form did.",
+        "required": [
+          "record"
+        ],
+        "properties": {
+          "record": {
+            "type": "string",
+            "description": "`rec_…` of the record created or changed."
+          }
+        },
+        "additionalProperties": false
       },
       "FormTask": {
         "type": "object",
@@ -15112,14 +16749,14 @@
               "string",
               "null"
             ],
-            "description": "The value, a template of one line."
+            "description": "The value, a template of one line, kept in the open: a key or a password goes into a\nsecret."
           },
           "secret": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Or the name of a secret of the automation whose value it sends."
+            "description": "Or the name of a secret of the automation whose value it sends as the whole value of\nthe header, `Token …` included."
           }
         },
         "additionalProperties": false
@@ -15138,6 +16775,7 @@
           "auto_create",
           "enabled",
           "redirect_uri",
+          "second_factor",
           "backchannel_logout_uri"
         ],
         "properties": {
@@ -15151,7 +16789,7 @@
           },
           "issuer": {
             "type": "string",
-            "description": "The issuer, as the provider names itself: `https://sso.example.ru/realms/xtab`."
+            "description": "The issuer, as the provider names itself: `https://sso.example.com/realms/xtab`."
           },
           "discovery_url": {
             "type": [
@@ -15187,6 +16825,17 @@
           "redirect_uri": {
             "type": "string",
             "description": "The address of return to register at the provider."
+          },
+          "second_factor": {
+            "type": "boolean",
+            "description": "The provider confirms a second factor: a login through it counts as one for\nadministrators when its token says so by `amr` or by [`IdentityProvider::factor_acr`]."
+          },
+          "factor_acr": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The `acr` of a login with a second factor; none — the `amr` of the token decides."
           },
           "backchannel_logout_uri": {
             "type": "string",
@@ -15261,6 +16910,20 @@
               "null"
             ],
             "description": "The provider is on the login page."
+          },
+          "second_factor": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "The provider confirms a second factor; off by default."
+          },
+          "factor_acr": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The `acr` of a login with a second factor; an empty text — none."
           }
         },
         "additionalProperties": false
@@ -15990,6 +17653,17 @@
             },
             "description": "The fields its elements show, ask for or filter by, described for its users — also\nfor those who see the interface alone and not its tables. Settings that name other\nfields or tables (the text of a formula, the fields of a lookup or a rollup, the\nlinked table) are left out; the description is empty."
           },
+          "form_rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ElementFormRules"
+            },
+            "description": "What the filter of the view of an element of records asks of the fields of the form\nits new records open in: by element, only the fields of that form. The required filter\nof the element and the filters of the page are in the description itself."
+          },
+          "role": {
+            "type": "string",
+            "description": "The level the person works in it at, one of three: `reader` — views its records (a\ncommenter of its base too), `editor` — works with them, `creator` — a creator or an\nowner of its base."
+          },
           "created_at": {
             "type": "string",
             "description": "Created, RFC 3339."
@@ -16185,7 +17859,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Domains of e-mail, `example.ru`; empty — any. Letters of automations may go to\nthese domains too."
+            "description": "Domains of e-mail, `example.com`; empty — any. Letters of automations may go to\nthese domains too."
           },
           "admins_only": {
             "type": "boolean",
@@ -16284,6 +17958,88 @@
           }
         }
       },
+      "LinkChoices": {
+        "type": "object",
+        "description": "A request of the records a link may be set to (`POST …/fields/{field}/choices`).",
+        "properties": {
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`rec_…` of the record of the field being filled in, if it exists already."
+          },
+          "values": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Values of the fields of that record by `fld_…` or name, also those not saved yet."
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A text the primary field of a candidate holds, up to 1000 characters."
+          },
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Candidates at most, 1 to 50; 20 by default."
+          },
+          "offset": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Candidates passed over before those given, 0 to 10000; 0 by default: the next portion\nof a list starts after the candidates it shows already."
+          },
+          "check": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`rec_…` of linked records chosen already, up to 100, whose fit is told in `outside`."
+          },
+          "via": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Through a form of a new record: the number of the element of records it was opened\nfrom, whose filters narrow the candidates as they narrow the record; without it — the\nfirst element of the page of the form that creates in it. Through the table of a base\n— not taken.",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListGroupSpec": {
+        "type": "object",
+        "description": "How a list groups its records.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "`fld_…`: one of the fields the list shows, not a long or formatted text."
+          },
+          "order": {
+            "$ref": "#/components/schemas/Direction",
+            "description": "`asc` (default) or `desc`: the order of the groups; empty values last either way."
+          },
+          "collapsed": {
+            "type": "boolean",
+            "description": "Whether every group starts collapsed."
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginBody": {
         "type": "object",
         "description": "Login with e-mail and password.",
@@ -16355,6 +18111,13 @@
           "is_org_admin"
         ],
         "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`usr_…` of the account: a new record in a list filtered by «is me» takes it."
+          },
           "display_name": {
             "type": "string",
             "description": "Display name."
@@ -16687,6 +18450,14 @@
         },
         "additionalProperties": false
       },
+      "OnError": {
+        "type": "string",
+        "description": "What a run does when an HTTP request fails for good — a status not 2xx, an answer that is\nnot JSON, no answer after the retries.",
+        "enum": [
+          "stop",
+          "continue"
+        ]
+      },
       "Operation": {
         "type": "object",
         "description": "A structure operation carried out in the background.",
@@ -16714,7 +18485,7 @@
               "string",
               "null"
             ],
-            "description": "Public id of the created object, once it succeeded."
+            "description": "Public id of the object the operation created or changed, once it succeeded."
           },
           "error": {
             "type": [
@@ -16772,6 +18543,27 @@
             "description": "Stars of a rating, 1–10 (default 5).",
             "minimum": 0
           },
+          "show_time": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether moments show their time (`true` by default): a date with time, the time of\ncreation or of the last change, a formula, a lookup or a rollup of moments. Without it\na moment shows its day in the time zone of the person. Only how it is shown: filters,\nsorting, exports and the values of the API keep the whole moment."
+          },
+          "number_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How a formula, a lookup or a rollup of numbers shows them: `number` (default),\n`currency` or `percent` (`0.5` is 50 %), with `precision` — its decimal places: two of\nan amount and none of a percent by default, as computed of a number — and of an amount\n`currency`. Given, it sets the whole look: the places, currency and sign not given take\nthe defaults of the format. Only how they are shown: values, filters, sorting and\nexports keep the number as computed. Of other types and of a result that is no number —\n`not-for-type`."
+          },
+          "show_currency_sign": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether amounts show the sign of their currency (`true` by default): of a currency\nfield, and of a formula, a lookup or a rollup in the format `currency`. Without it an\namount is shown with the places of the field and the separators of the language. Only\nhow it is shown."
+          },
           "choices": {
             "type": [
               "array",
@@ -16796,6 +18588,13 @@
             ],
             "description": "A link to one record at most (many by default)."
           },
+          "inverse_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the inverse field a new link makes in the linked table, free there\nregardless of case. By default — the name of this table, or «Table (Link)» with the\nname of the new link when that is taken, then with a number. Only when a link to\nanother table is added: a table linked to itself has no inverse field."
+          },
           "formula": {
             "type": [
               "string",
@@ -16808,21 +18607,28 @@
               "string",
               "null"
             ],
-            "description": "The link field of the same table a lookup, a count or a rollup reads through\n(`fld_…`); given when the field is added, not changed after."
+            "description": "The link field of the same table a lookup, a count or a rollup reads through\n(`fld_…`); given when the field is added, not changed after: a change asked for is\nrefused, the same value is taken."
           },
           "lookup_field": {
             "type": [
               "string",
               "null"
             ],
-            "description": "The field of the linked table a lookup shows or a rollup sums up (`fld_…`): a rollup\ntakes numbers and texts; given when the field is added, not changed after."
+            "description": "The field of the linked table a lookup shows or a rollup sums up (`fld_…`): a rollup\ntakes numbers and texts; given when the field is added, not changed after, as\n`link_field`."
           },
           "condition": {
             "type": [
               "object",
               "null"
             ],
-            "description": "The linked records a rollup sums up: a filter over the fields of the linked table, as\nthe filter of a view; none — all of them. Given when the field is added."
+            "description": "The linked records a rollup sums up: a filter over the fields of the linked table, as\nthe filter of a view; none — all of them. A new condition or expression of a rollup\ncounts its values again in the background; `null` removes the condition."
+          },
+          "choose": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The records of the linked table a link offers to choose: a tree of `and` / `or` of\nconditions `{via?, field, op, value}` over the fields of the linked table and of the\ntables further along its links (`via` — link fields from the linked table, up to three\nlinks with the compared one), where `value` is a value as in a filter of a view or\n`{\"this\": {\"field\", \"via\"?}}` — the value of a link or a user field of the record being\nfilled in, compared by `has_any_of` or `has_none_of` (`is_any_of` for a field of one\nuser); at most 20 conditions. An empty value of the record does not narrow the list.\nIt narrows the choice only: links outside it are still written. `null` removes it."
           },
           "default": {
             "oneOf": [
@@ -16884,6 +18690,27 @@
             "format": "int32",
             "description": "Stars of a rating.",
             "minimum": 0
+          },
+          "show_time": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`false` — moments show their day without the time; absent — with the time."
+          },
+          "number_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How a formula, a lookup or a rollup of numbers shows them: `currency` or `percent`;\nabsent — as a number."
+          },
+          "show_currency_sign": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`false` — amounts are shown without the sign of their currency; absent — with it."
           },
           "choices": {
             "type": [
@@ -16954,6 +18781,17 @@
               "null"
             ],
             "description": "The linked records a rollup sums up, as the filter of a view; none — all of them."
+          },
+          "choose": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The records of the linked table a link offers to choose, as it is set; a part naming a\nfield or a table that is gone is left out."
+          },
+          "choose_broken": {
+            "type": "boolean",
+            "description": "A part of `choose` named a field or a table that is gone and was left out: the choice\nis wider than it was set."
           },
           "default": {
             "oneOf": [
@@ -17210,7 +19048,7 @@
       },
       "PageSpec": {
         "type": "object",
-        "description": "A page: rows of cells on a grid of 12 columns — 3 on a window of middle width, 1 on a\nnarrow one — each cell showing one of its elements.",
+        "description": "A page: rows on a grid of 12 columns — 3 on a window of middle width, 1 on a narrow one.\nA row has either cells, each showing one of its elements, or 2 to 3 columns, each showing\nsome of them top to bottom; a column is as high as what it shows.",
         "required": [
           "id",
           "name",
@@ -17243,7 +19081,7 @@
             "items": {
               "$ref": "#/components/schemas/ElementSpec"
             },
-            "description": "Its elements; each one stands in exactly one cell."
+            "description": "Its elements; each one stands in exactly one cell or column, a form only in a window\nin none."
           }
         },
         "additionalProperties": false
@@ -17382,6 +19220,12 @@
             "type": "integer",
             "format": "int32",
             "description": "Minutes the lock lasts; 0 — until an administrator unlocks it; up to 43200.",
+            "minimum": 0
+          },
+          "max_sessions": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Sessions of an account at once: a new login ends the oldest; 0 — no limit; up to 100;\n10 when absent.",
             "minimum": 0
           }
         },
@@ -17544,7 +19388,7 @@
           },
           "fields": {
             "type": "object",
-            "description": "For a button that creates a record on a page with an element «fields» of its table:\nthe values the person filled in, by `fld_…` or name — only the fields of that element."
+            "description": "Deprecated: no button sends fields of the page any more — a form sends its own. Any\nvalue is refused as `read-only`."
           }
         },
         "additionalProperties": false
@@ -17917,7 +19761,7 @@
               "string",
               "null"
             ],
-            "description": "Addresses separated by commas, a template: `a@example.ru, {{ {Менеджер} }}`."
+            "description": "Addresses separated by commas, a template: `a@example.com, {{ {Менеджер} }}`."
           }
         },
         "additionalProperties": false
@@ -18219,6 +20063,63 @@
               "minimum": 0
             },
             "description": "Numbers of the filters of the page that narrow it."
+          },
+          "open_in": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of the form of the page a record opens in: one that changes or reads the\nrecord chosen here; none — the record opens as before.",
+            "minimum": 0
+          },
+          "create_in": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of the form of the page a new record is filled in: a form of a new record\nof the same table, only where the element creates records; none — as before.",
+            "minimum": 0
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A list only: `fld_…` each row shows large, one of `fields`; none — the primary field\nif shown, otherwise the first one."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list only: `fld_…` shown small under it, up to 4, each one of `fields` and not\n`title`; empty — the next 3 of `fields`."
+          },
+          "group": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ListGroupSpec",
+                "description": "A list only: the field its records are grouped by, one of `fields`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ElementColumnSpec"
+            },
+            "description": "A grid only: the widths of its columns, each of a field of `fields`, once; a field\nwithout one is 180 pixels wide. Their order means nothing: the columns go in the order\nof `fields`."
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SortInput"
+            },
+            "description": "A grid or a list only: the order of its records by default, up to 3 keys of fields of\n`fields`, each once, `asc` or `desc`; empty — the sort of its view, otherwise the manual\norder of the table. A sort in a request for its records goes before it."
           }
         },
         "additionalProperties": false
@@ -18324,6 +20225,31 @@
         },
         "additionalProperties": false
       },
+      "Rounding": {
+        "type": "object",
+        "description": "A number a change of type rounds, as the new type shows it: percents of a percent.",
+        "required": [
+          "places",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "places": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Places after the point the new type keeps.",
+            "minimum": 0
+          },
+          "before": {
+            "type": "string",
+            "description": "The number before, a decimal with a point: `112715.42843`."
+          },
+          "after": {
+            "type": "string",
+            "description": "The number after: `112715`."
+          }
+        }
+      },
       "RowHeight": {
         "type": "string",
         "description": "Height of the rows of a grid.",
@@ -18335,20 +20261,59 @@
       },
       "RowSpec": {
         "type": "object",
-        "description": "A row of the grid.",
-        "required": [
-          "cells"
-        ],
+        "description": "A row of the grid: either cells side by side, as high as the highest of them, or 2 to 3\ncolumns side by side, each of a height of its own.",
         "properties": {
           "cells": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CellSpec"
             },
-            "description": "Its cells left to right; their widths add up to at most 12."
+            "description": "Its cells left to right; their widths add up to at most 12. Always in an answer, empty\nin a row of columns; may be left out of a request."
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSpec"
+            },
+            "description": "Its columns left to right, 2 or 3; their widths add up to at most 12. Only in a row of\ncolumns, which has no cells."
           }
         },
         "additionalProperties": false
+      },
+      "RuleBound": {
+        "type": "object",
+        "description": "An end of the values of a number or a date.",
+        "required": [
+          "value",
+          "inclusive"
+        ],
+        "properties": {
+          "value": {
+            "description": "A number or a date `YYYY-MM-DD`."
+          },
+          "inclusive": {
+            "type": "boolean",
+            "description": "Whether the end itself is taken."
+          }
+        }
+      },
+      "RulePerson": {
+        "type": "object",
+        "description": "A person the filters of an element name: one the form may offer or keep.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`usr_…`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name as the organization shows it."
+          }
+        }
       },
       "Run": {
         "type": "object",
@@ -18382,6 +20347,17 @@
             ],
             "description": "The record that started it, `rec_…`."
           },
+          "trigger": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TriggerKind",
+                "description": "The kind of the trigger that started it."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/RunStatus",
             "description": "What became of it."
@@ -18391,7 +20367,7 @@
               "string",
               "null"
             ],
-            "description": "Why it failed, was cancelled or skipped."
+            "description": "Why it failed, was cancelled or skipped: a code; for a step, its number first and the details after colons, `step 3: recipient-not-allowed: bu***@example.test`."
           },
           "depth": {
             "type": "integer",
@@ -18500,7 +20476,7 @@
               "string",
               "null"
             ],
-            "description": "Why it failed."
+            "description": "Why it failed: a code and its details after colons, `secret-missing: api_key`."
           },
           "finished_at": {
             "type": [
@@ -19191,7 +21167,7 @@
                   "string",
                   "null"
                 ],
-                "description": "The body, a template of JSON: inserts are escaped as its strings."
+                "description": "The body, a template of JSON: an insert stands inside the quotes of a string and its\nvalue is escaped as one, `{\"query\": \"{{ {ИНН} }}\"}`."
               },
               "signing_secret": {
                 "type": [
@@ -19210,6 +21186,10 @@
                     "type": "null"
                   }
                 ]
+              },
+              "on_error": {
+                "$ref": "#/components/schemas/OnError",
+                "description": "What the run does when the request fails for good — a status other than 2xx, an\nanswer that is not JSON when a later step reads it, no answer after the retries:\n`stop` (the default) or `continue`, and the later steps read `STEP(n, \"$.status\")`\nand `STEP(n, \"$.error\")`."
               },
               "kind": {
                 "type": "string",
@@ -19360,9 +21340,239 @@
               "null"
             ],
             "description": "The field that names the records from now on, `fld_…`: a field of the table of a type\nthat may name them — a text, a number, a date, a choice, an autonumber, a formula."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Move the table right before this table of the same base (`tbl_…`) in the order of\nthe tabs, the same for everyone; not together with `after`."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Move the table right after this table of the same base (`tbl_…`)."
           }
         },
         "additionalProperties": false
+      },
+      "TestFieldValue": {
+        "type": "object",
+        "description": "A field of a record of a trial: its value now and after the step, as the API writes them.",
+        "required": [
+          "field",
+          "after"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "The field, `fld_…`."
+          },
+          "before": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "The value now; none for a new record."
+          },
+          "after": {
+            "type": "object",
+            "description": "The value after the step."
+          }
+        }
+      },
+      "TestHeader": {
+        "type": "object",
+        "description": "A header of a request of a trial.",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value; that of a secret is `***`."
+          }
+        }
+      },
+      "TestLetter": {
+        "type": "object",
+        "description": "A letter a trial would send.",
+        "required": [
+          "to",
+          "cc",
+          "subject",
+          "text"
+        ],
+        "properties": {
+          "to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Recipients."
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Copies."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject."
+          },
+          "text": {
+            "type": "string",
+            "description": "The text."
+          }
+        }
+      },
+      "TestRecord": {
+        "type": "object",
+        "description": "A record a trial would change or create: its fields that would change.",
+        "required": [
+          "table",
+          "values"
+        ],
+        "properties": {
+          "table": {
+            "type": "string",
+            "description": "The table, `tbl_…`."
+          },
+          "record": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The record changed, `rec_…`; none — a new one."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestFieldValue"
+            },
+            "description": "The fields whose values would change, computed ones among them."
+          }
+        }
+      },
+      "TestRequest": {
+        "type": "object",
+        "description": "A request of a trial as it was sent; the values of secrets are `***`.",
+        "required": [
+          "method",
+          "url",
+          "headers",
+          "body_truncated"
+        ],
+        "properties": {
+          "method": {
+            "type": "string",
+            "description": "The method."
+          },
+          "url": {
+            "type": "string",
+            "description": "The address with its inserts."
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestHeader"
+            },
+            "description": "The headers sent."
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The body sent, at most 64 KB."
+          },
+          "body_truncated": {
+            "type": "boolean",
+            "description": "Whether the body was longer."
+          }
+        }
+      },
+      "TestResponse": {
+        "type": "object",
+        "description": "The answer to a request of a trial; the values of secrets are `***`.",
+        "required": [
+          "status",
+          "body_truncated",
+          "json"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status.",
+            "minimum": 0
+          },
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its `Content-Type`."
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The body, at most 64 KB."
+          },
+          "body_truncated": {
+            "type": "boolean",
+            "description": "Whether the body was longer."
+          },
+          "json": {
+            "type": "boolean",
+            "description": "Whether the body is JSON."
+          }
+        }
+      },
+      "TestValue": {
+        "type": "object",
+        "description": "A value a step read from the answer of an earlier one.",
+        "required": [
+          "step",
+          "path"
+        ],
+        "properties": {
+          "step": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The number of the step of the answer.",
+            "minimum": 0
+          },
+          "path": {
+            "type": "string",
+            "description": "The path, `$.body.suggestions[0].value`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The value as a text; none — blank."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its error: `#NOT_FOUND` — the path is not in the answer, `#TOO_LONG`."
+          }
+        }
       },
       "Token": {
         "type": "object",
@@ -19657,6 +21867,17 @@
         ],
         "description": "What starts a run, always on a record of the table of the automation."
       },
+      "TriggerKind": {
+        "type": "string",
+        "description": "The kind of a trigger: what a run of an automation was started by.",
+        "enum": [
+          "record_created",
+          "record_updated",
+          "record_matches",
+          "form_submitted",
+          "button_pressed"
+        ]
+      },
       "TypeChange": {
         "type": "object",
         "description": "A change of the type of a field: the new type and its settings. Values that do not fit\nthe new type become empty — `POST /fields/{field}/type-preview` tells how many first.",
@@ -19699,6 +21920,22 @@
             "type": "integer",
             "format": "int64",
             "description": "Of them, values that would become empty."
+          },
+          "rounded": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Of them, numbers that would keep fewer places than they have: rounded to the places\nof the new type."
+          },
+          "rounding": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Rounding",
+                "description": "The first number rounded, when any is: the places of the new type and the number\nbefore and after, as the new type shows it."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "more": {
             "type": "boolean",
@@ -20106,7 +22343,7 @@
       },
       "ViewPatch": {
         "type": "object",
-        "description": "A change of a view: its name, its settings, or both.",
+        "description": "A change of a view: its name, its settings, its place among the views, or several.",
         "properties": {
           "name": {
             "type": [
@@ -20125,6 +22362,20 @@
                 "type": "null"
               }
             ]
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Move the view right before this view of the same table (`viw_…`) in the order of its\nviews, the same for everyone; not together with `after`."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Move the view right after this view of the same table (`viw_…`)."
           }
         },
         "additionalProperties": false

@@ -1,7 +1,7 @@
 ---
 title: "Перенос, внешняя СУБД и удаление"
 description: "Что сохранить при переносе: файл .env, install.toml и папку secrets/. Без secrets/master_key база не откроется, без secrets/backup_key не прочитаются копии."
-version: "v0.8.0"
+version: "v0.9.0"
 lang: "ru"
 order: 12
 ---
@@ -17,7 +17,7 @@ order: 12
 **Файлы в другое S3:**
 
 ```bash
-docker compose exec xtab-worker xtab storage migrate --to-endpoint https://s3.example.ru --to-bucket xtab \
+docker compose exec xtab-worker xtab storage migrate --to-endpoint https://s3.example.com --to-bucket xtab \
   --to-access-key-file /run/secrets/… --to-secret-key-file /run/secrets/…
 ```
 
